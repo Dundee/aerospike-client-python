@@ -33,7 +33,7 @@
 #include "nullobject.h"
 
 PyObject *py_global_hosts;
-int counter = 0xA5000000;
+int counter = 0xA7000000;
 bool user_shm_key = false;
 
 static PyMethodDef Aerospike_Methods[] = {

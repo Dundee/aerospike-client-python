@@ -25,7 +25,6 @@
 #include <aerospike/as_record.h>
 #include <aerospike/as_geojson.h>
 
-#include <aerospike/as_ldt.h>
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_list.h>

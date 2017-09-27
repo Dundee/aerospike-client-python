@@ -24,7 +24,6 @@
 #include <aerospike/as_query.h>
 #include <aerospike/as_scan.h>
 #include <aerospike/as_bin.h>
-#include <aerospike/as_ldt.h>
 #include "pool.h"
 
 // Bin names can be of type Unicode in Python
