@@ -537,14 +537,6 @@ PyObject * AerospikeClient_Set_Log_Level(AerospikeClient * self, PyObject *args,
 PyObject * AerospikeClient_Set_Log_Handler(AerospikeClient * self, PyObject *args, PyObject * kwds);
 
 /**
- * LLIST Operations
- *
- *		client.llist(key, bin)
- *
- */
-AerospikeLList * AerospikeClient_LList(AerospikeClient * self, PyObject * args, PyObject * kwds);
-
-/**
  * Get records in a batch
  *
  *		client.get_many([keys], policies)
