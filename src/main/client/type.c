@@ -344,12 +344,6 @@ static PyMethodDef AerospikeClient_Type_Methods[] = {
 		(PyCFunction)AerospikeClient_Index_2dsphere_Create,	METH_VARARGS | METH_KEYWORDS,
 		"Creates a secondary geo2dsphere index"},
 
-    // LLIST OPERATIONS
-
-	{"llist",
-		(PyCFunction) AerospikeClient_LList, METH_VARARGS | METH_KEYWORDS,
-		"LLIST operations"},
-
 	// BATCH OPERATIONS
 
 	{"get_many",
