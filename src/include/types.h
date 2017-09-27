@@ -84,11 +84,3 @@ typedef struct {
 	PyObject_HEAD
 	PyObject *geo_data;
 } AerospikeGeospatial;
-
-typedef struct {
-    PyObject_HEAD
-    AerospikeClient * client;
-    as_ldt llist;
-    as_key key;
-    char bin_name[AS_BIN_NAME_MAX_LEN];
-} AerospikeLList;

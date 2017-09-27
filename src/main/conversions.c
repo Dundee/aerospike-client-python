@@ -1557,30 +1557,6 @@ bool error_to_pyobject(const as_error * err, PyObject ** obj)
 	return true;
 }
 
-/**
- * This method will initialize ldt.
- *
- * @param error                 The error parameter
- * @param ldt_p                 The LDT instance
- * @param bin_name              The ldt bin name
- * @param type                  The type of LDT
- * @param module                The UDF module
- *
- * On failure it will set an error.
- */
-as_status initialize_ldt(as_error *error, as_ldt* ldt_p, char* bin_name,
-		int type, char* module)
-{
-	as_error_reset(error);
-	if (!bin_name) {
-		as_error_update(error, AEROSPIKE_ERR_PARAM, "Bin name is null");
-	}
-	if (!as_ldt_init(ldt_p, bin_name, type, module)) {
-		as_error_update(error, AEROSPIKE_ERR_PARAM, "Unable to initialize LDT");
-	}
-
-	return error->code;
-}
 
 void initialize_bin_for_strictypes(AerospikeClient *self, as_error *err, PyObject *py_value, as_binop *binop, char *bin, as_static_pool *static_pool) {
 
