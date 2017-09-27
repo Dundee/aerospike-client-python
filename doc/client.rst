@@ -30,7 +30,7 @@ a cluster-tending thread.
         from __future__ import print_function
         # import the module
         import aerospike
-        from aerospike.exception import *
+        from aerospike import exception as ex
         import sys
 
         # Configure the client
@@ -41,7 +41,7 @@ a cluster-tending thread.
         # Create a client and connect it to the cluster
         try:
             client = aerospike.client(config).connect()
-        except ClientError as e:
+        except ex.ClientError as e:
             print("Error: {0} [{1}]".format(e.msg, e.code))
             sys.exit(1)
 
@@ -54,7 +54,7 @@ a cluster-tending thread.
                 'name': 'John Doe',
                 'age': 32
             })
-        except RecordError as e:
+        except ex.RecordError as e:
             print("Error: {0} [{1}]".format(e.msg, e.code))
 
         # Read a record
@@ -106,10 +106,10 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
-            config = { 'hosts': [('127.0.0.1', 3000)] }
+            config = {'hosts': [('127.0.0.1', 3000)]}
             client = aerospike.client(config).connect()
 
             try:
@@ -121,9 +121,9 @@ a cluster-tending thread.
                 print(meta)
                 print('--------------------------')
                 print(bins)
-            except RecordNotFound:
+            except ex.RecordNotFound:
                 print("Record not found:", key)
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -158,7 +158,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -169,9 +169,9 @@ a cluster-tending thread.
                 key = ('test', 'demo', 1)
                 (key, meta, bins) = client.select(key, ['name'])
                 print("name: ", bins.get('name'))
-            except RecordNotFound:
+            except ex.RecordNotFound:
                 print("Record not found:", key)
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -202,7 +202,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -215,9 +215,9 @@ a cluster-tending thread.
                 print(key)
                 print('--------------------------')
                 print(meta)
-            except RecordNotFound:
+            except ex.RecordNotFound:
                 print("Record not found:", key)
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -247,7 +247,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
 
             config = {
                 'hosts': [ ('127.0.0.1', 3000) ],
@@ -270,7 +270,7 @@ a cluster-tending thread.
                 client.put(key, {'smiley': u"\ud83d\ude04"})
                 # removing a bin
                 client.put(key, {'i': aerospike.null()})
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -287,7 +287,7 @@ a cluster-tending thread.
 
                 from __future__ import print_function
                 import aerospike
-                from aerospike.exception import *
+                from aerospike import exception as ex
                 import sys
 
                 config = { 'hosts': [ ('127.0.0.1',3000)]}
@@ -301,9 +301,9 @@ a cluster-tending thread.
                         meta={'gen': 33},
                         policy={'gen':aerospike.POLICY_GEN_EQ})
                     print('Record written.')
-                except RecordGenerationError:
+                except ex.RecordGenerationError:
                     print("put() failed due to generation policy mismatch")
-                except AerospikeError as e:
+                except ex.AerospikeError as e:
                     print("Error: {0} [{1}]".format(e.msg, e.code))
                 client.close()
 
@@ -437,7 +437,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -446,7 +446,7 @@ a cluster-tending thread.
             try:
                 key = ('test', 'demo', 1)
                 client.append(key, 'name', ' jr.', policy={'timeout': 1200})
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -471,7 +471,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -480,7 +480,7 @@ a cluster-tending thread.
             try:
                 key = ('test', 'demo', 1)
                 client.prepend(key, 'name', 'Dr. ', policy={'timeout': 1200})
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -506,7 +506,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -523,7 +523,7 @@ a cluster-tending thread.
                 (key, meta, bins) = client.get(key)
                 print("Poor Kitty:", bins, "\n")
                 print(bins)
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -1355,7 +1355,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -1401,7 +1401,7 @@ a cluster-tending thread.
                 print(meta)
                 print('--------------------------')
                 print(bins) # will display all bins selected by OPERATOR_READ operations
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -1422,7 +1422,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -1441,7 +1441,7 @@ a cluster-tending thread.
                 ]
                 (key, meta, bins) = client.operate(key, ops, {'ttl':1800})
                 print("Touched the record for {0}, extending its ttl by 30m".format(bins))
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -1489,7 +1489,7 @@ a cluster-tending thread.
 
                 from __future__ import print_function
                 import aerospike
-                from aerospike.exception import AerospikeError
+                from aerospike import exception as ex
                 import sys
 
                 config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -1513,7 +1513,7 @@ a cluster-tending thread.
                               "val": 3}]
 
                     client.operate_ordered(key, llist, {}, policy)
-                except AerospikeError as e:
+                except ex.AerospikeError as e:
                     print("Error: {0} [{1}]".format(e.msg, e.code))
                     sys.exit(1)
                 finally:
@@ -1548,7 +1548,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -1564,7 +1564,7 @@ a cluster-tending thread.
                 ]
                 records = client.get_many(keys)
                 print records
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -1608,7 +1608,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -1624,7 +1624,7 @@ a cluster-tending thread.
                 ]
                 records = client.exists_many(keys)
                 print records
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -1669,7 +1669,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import sys
 
             config = { 'hosts': [('127.0.0.1', 3000)] }
@@ -1685,7 +1685,7 @@ a cluster-tending thread.
                 ]
                 records = client.select_many(keys, [u'name'])
                 print records
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
             finally:
@@ -1923,7 +1923,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
             import time
 
             config = {'hosts': [ ('127.0.0.1', 3000)]}
@@ -1939,7 +1939,7 @@ a cluster-tending thread.
                 print("Job ", str(job_id), " completed")
                 print("Progress percentage : ", response['progress_pct'])
                 print("Number of scanned records : ", response['records_read'])
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
             client.close()
 
@@ -1962,7 +1962,7 @@ a cluster-tending thread.
 
             from __future__ import print_function
             import aerospike
-            from aerospike.exception import AerospikeError
+            from aerospike import exception as ex
 
             config = {'hosts': [ ('127.0.0.1', 3000)]}
             client = aerospike.client(config).connect()
@@ -1980,7 +1980,7 @@ a cluster-tending thread.
                     print("Background scan status : ", "SCAN_STATUS_COMPLETED")
                 else:
                     print("Scan_apply failed")
-            except AerospikeError as e:
+            except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
             client.close()
 
@@ -2289,18 +2289,6 @@ a cluster-tending thread.
 
     .. rubric:: LList
 
-    .. method:: llist(key, bin[, module]) -> LList
-
-        Return a :class:`aerospike.LList` object on a specified *key* and *bin*.
-
-        :param tuple key: a :ref:`aerospike_key_tuple` associated with the record.
-        :param str bin: the name of the bin containing the :class:`~aerospike.LList`.
-        :param str module: an optional UDF module that contains filtering \
-                           functions to be used in conjunction with LList methods.
-        :return: an :py:class:`aerospike.LList` class.
-        :raises: a subclass of :exc:`~aerospike.exception.LDTError`.
-
-
     .. index::
         single: Admin Operations
 
@@ -2326,7 +2314,7 @@ a cluster-tending thread.
         .. code-block:: python
 
             import aerospike
-            from aerospike.exception import *
+            from aerospike import exception as ex
             import time
 
             config = {'hosts': [('127.0.0.1', 3000)] }
@@ -2340,7 +2328,7 @@ a cluster-tending thread.
                 time.sleep(1)
                 print(client.admin_query_user('dev'))
                 print(admin_query_users())
-            except AdminError as e:
+            except ex.AdminError as e:
                 print("Error [{0}]: {1}".format(e.code, e.msg))
             client.close()
 

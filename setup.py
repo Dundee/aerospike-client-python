@@ -332,7 +332,6 @@ setup(
                 'src/main/serializer.c',
                 'src/main/client/remove_bin.c',
                 'src/main/client/get_key_digest.c',
-                'src/main/client/llist.c',
                 'src/main/query/type.c',
                 'src/main/query/apply.c',
                 'src/main/query/foreach.c',

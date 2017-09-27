@@ -77,8 +77,6 @@ as_status bins_to_pyobject(AerospikeClient * self, as_error * err, const as_reco
 
 bool error_to_pyobject(const as_error * err, PyObject ** obj);
 
-as_status initialize_ldt(as_error *error, as_ldt* ldt_p, char* bin_name, int type, char* module);
-
 as_status pyobject_to_astype_write(AerospikeClient * self, as_error * err, PyObject * py_value, as_val **val,
 	as_static_pool *static_pool, int serializer_type);
 

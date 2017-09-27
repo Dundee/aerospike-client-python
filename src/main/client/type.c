@@ -598,37 +598,115 @@ static int AerospikeClient_Type_Init(AerospikeClient * self, PyObject * args, Py
 		//global defaults setting
 		PyObject * py_key_policy = PyDict_GetItemString(py_policies, "key");
 		if (py_key_policy && PyInt_Check(py_key_policy)) {
-			config.policies.key = PyInt_AsLong(py_key_policy);
+			long long_key_policy = PyInt_AsLong(py_key_policy);
+			config.policies.read.key = long_key_policy;
+			config.policies.write.key = long_key_policy;
+			config.policies.apply.key = long_key_policy;
+			config.policies.operate.key = long_key_policy;
+			config.policies.remove.key = long_key_policy;
 		}
 
+		/* This was the name of the policy pre 3.0.0, keep for legacy reasons
+		 * It is the same as total_timeout
+		 */
 		PyObject * py_timeout = PyDict_GetItemString(py_policies, "timeout");
 		if (py_timeout && PyInt_Check(py_timeout)) {
-			config.policies.timeout = PyInt_AsLong(py_timeout);
+			long long_timeout = PyInt_AsLong(py_timeout);
+
+			config.policies.write.base.total_timeout = long_timeout;
+			config.policies.read.base.total_timeout = long_timeout;
+			config.policies.apply.base.total_timeout = long_timeout;
+			config.policies.operate.base.total_timeout = long_timeout;
+			config.policies.query.base.total_timeout = long_timeout;
+			config.policies.scan.base.total_timeout = long_timeout;
+			config.policies.remove.base.total_timeout = long_timeout;
+			config.policies.batch.base.total_timeout = long_timeout;
+		}
+
+		PyObject * py_sock_timeout = PyDict_GetItemString(py_policies, "socket_timeout");
+		if (py_sock_timeout && PyInt_Check(py_sock_timeout)) {
+			long long_timeout = PyInt_AsLong(py_sock_timeout);
+
+			config.policies.write.base.socket_timeout = long_timeout;
+			config.policies.read.base.socket_timeout = long_timeout;
+			config.policies.apply.base.socket_timeout = long_timeout;
+			config.policies.operate.base.socket_timeout = long_timeout;
+			config.policies.query.base.socket_timeout = long_timeout;
+			config.policies.scan.base.socket_timeout = long_timeout;
+			config.policies.remove.base.socket_timeout = long_timeout;
+			config.policies.batch.base.socket_timeout = long_timeout;
+		}
+
+		PyObject * py_total_timeout = PyDict_GetItemString(py_policies, "total_timeout");
+		if (py_total_timeout && PyInt_Check(py_total_timeout)) {
+			long long_total_timeout = PyInt_AsLong(py_total_timeout);
+
+			config.policies.write.base.total_timeout = long_total_timeout;
+			config.policies.read.base.total_timeout = long_total_timeout;
+			config.policies.apply.base.total_timeout = long_total_timeout;
+			config.policies.operate.base.total_timeout = long_total_timeout;
+			config.policies.query.base.total_timeout = long_total_timeout;
+			config.policies.scan.base.total_timeout = long_total_timeout;
+			config.policies.remove.base.total_timeout = long_total_timeout;
+			config.policies.batch.base.total_timeout = long_total_timeout;
 		}
 
 		PyObject * py_retry = PyDict_GetItemString(py_policies, "retry");
 		if (py_retry && PyInt_Check(py_retry)) {
-			config.policies.retry = PyInt_AsLong(py_retry);
+			long long_retry = PyInt_AsLong(py_retry);
+			config.policies.write.base.max_retries = long_retry;
+			config.policies.read.base.max_retries = long_retry;
+			config.policies.apply.base.max_retries = long_retry;
+			config.policies.operate.base.max_retries = long_retry;
+			config.policies.query.base.max_retries = long_retry;
+			config.policies.scan.base.max_retries = long_retry;
+			config.policies.remove.base.max_retries = long_retry;
+			config.policies.batch.base.max_retries = long_retry;
+		}
+		PyObject * py_max_retry = PyDict_GetItemString(py_policies, "max_retries");
+		if (py_max_retry && PyInt_Check(py_max_retry)) {
+			long long_max_retries = PyInt_AsLong(py_retry);
+			config.policies.write.base.max_retries = long_max_retries;
+			config.policies.read.base.max_retries = long_max_retries;
+			config.policies.apply.base.max_retries = long_max_retries;
+			config.policies.operate.base.max_retries = long_max_retries;
+			config.policies.query.base.max_retries = long_max_retries;
+			config.policies.scan.base.max_retries = long_max_retries;
+			config.policies.remove.base.max_retries = long_max_retries;
+			config.policies.batch.base.max_retries = long_max_retries;
 		}
 
 		PyObject * py_exists = PyDict_GetItemString(py_policies, "exists");
 		if (py_exists && PyInt_Check(py_exists)) {
-			config.policies.exists = PyInt_AsLong(py_exists);
+			long long_exists = PyInt_AsLong(py_exists);
+			config.policies.write.exists = long_exists;
 		}
 
 		PyObject * py_replica = PyDict_GetItemString(py_policies, "replica");
 		if (py_replica && PyInt_Check(py_replica)) {
-			config.policies.replica = PyInt_AsLong(py_replica);
+			long long_replica = PyInt_AsLong(py_replica);
+			config.policies.read.replica = long_replica;
+			config.policies.write.replica = long_replica;
+			config.policies.apply.replica = long_replica;
+			config.policies.operate.replica = long_replica;
+			config.policies.remove.replica = long_replica;
 		}
 
 		PyObject * py_consistency_level = PyDict_GetItemString(py_policies, "consistency_level");
 		if (py_consistency_level && PyInt_Check(py_consistency_level)) {
-			config.policies.consistency_level = PyInt_AsLong(py_consistency_level);
+			long long_consistency_level = PyInt_AsLong(py_consistency_level);
+			config.policies.read.consistency_level = long_consistency_level;
+			config.policies.operate.consistency_level = long_consistency_level;
+			config.policies.batch.consistency_level = long_consistency_level;
 		}
 
 		PyObject * py_commit_level = PyDict_GetItemString(py_policies, "commit_level");
 		if (py_commit_level && PyInt_Check(py_commit_level)) {
-			config.policies.commit_level = PyInt_AsLong(py_commit_level);
+			long long_commit_level = PyInt_AsLong(py_commit_level);
+			config.policies.write.commit_level = long_commit_level;
+			config.policies.apply.commit_level = long_commit_level;
+			config.policies.operate.commit_level = long_commit_level;
+			config.policies.remove.commit_level = long_commit_level;
 		}
 
 		// This does not match documentation (should not be in policies),
