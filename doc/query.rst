@@ -75,7 +75,7 @@ Query Class --- :class:`Query`
             query.select('name', 'age') # matched records return with the values of these bins
             # assuming there is a secondary index on the 'age' bin of test.demo
             query.where(p.equals('age', 40))
-            records = query.results( {'timeout':2000})
+            records = query.results( {'total_timeout':2000})
             pp.pprint(records)
             client.close()
 
@@ -113,7 +113,7 @@ Query Class --- :class:`Query`
                 pp.pprint(bins)
                 names.append(bins['name'])
 
-            query.foreach(matched_names, {'timeout':2000})
+            query.foreach(matched_names, {'total_timeout':2000})
             pp.pprint(names)
             client.close()
 
@@ -250,6 +250,6 @@ Query Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** maximum time in milliseconds to wait for the operation to complete. Default ``0`` means *do not timeout*.
+        * **total_timeout** maximum time in milliseconds to wait for the operation to complete. Default ``0`` means *do not timeout*.
 
 
