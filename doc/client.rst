@@ -2287,8 +2287,6 @@ a cluster-tending thread.
 
             client.close()
 
-    .. rubric:: LList
-
     .. index::
         single: Admin Operations
 
