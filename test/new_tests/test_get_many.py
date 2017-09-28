@@ -285,8 +285,5 @@ class TestGetMany():
         Invoke prepend() invalid namespace
         """
         key = ('test1', 'demo', 1)
-        try:
+        with pytest.raises(e.ClientError):
             key, _, _ = self.as_connection.get(key)
-
-        except e.NamespaceNotFound as exception:
-            assert exception.code == 20

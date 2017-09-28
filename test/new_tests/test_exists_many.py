@@ -392,10 +392,8 @@ class TestExistsMany():
         key = ('test2', 'demo', 20)
         # self.as_connection.put(key, rec, meta, policy)
         keys.append(key)
-        try:
+        with pytest.raises(e.ClientError):
             self.as_connection.exists_many(keys)
-        except e.NamespaceNotFound as exception:
-            assert exception.code == 20
 
     def test_neg_exists_many_without_any_parameter(self):
 

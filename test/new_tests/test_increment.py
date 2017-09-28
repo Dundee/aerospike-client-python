@@ -264,7 +264,7 @@ class TestIncrement(object):
         """
         key = ('test', 'demo', 1)
         policy = {
-            'timeout': 0.5
+            'total_timeout': 0.5
         }
         with pytest.raises(e.ParamError) as err_info:
             self.as_connection.increment(key, "age", 5, {}, policy)
@@ -377,7 +377,7 @@ class TestIncrement(object):
         self.as_connection.put(key, bins)
         try:
             self.as_connection.increment(key, 'age', 68786586756785785745)
-        #except SystemError:
+        # except SystemError:
         #       pass
         except Exception as exception:
             assert exception.code == AerospikeStatus.AEROSPIKE_ERR_PARAM
