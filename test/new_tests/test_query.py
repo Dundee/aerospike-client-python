@@ -19,52 +19,140 @@ class TestQuery(TestBaseClass):
 
     def setup_class(cls):
         client = TestBaseClass.get_new_connection()
-        client.index_integer_create('test', 'demo', 'test_age',
-                                    'age_index')
-        client.index_string_create('test', 'demo', 'addr',
-                                   'addr_index')
-        client.index_integer_create('test', 'demo', 'age1',
-                                    'age_index1')
-        client.index_list_create('test', 'demo', 'numeric_list',
-                                 aerospike.INDEX_NUMERIC,
-                                 'numeric_list_index')
-        client.index_list_create('test', 'demo', 'string_list',
-                                 aerospike.INDEX_STRING,
-                                 'string_list_index')
-        client.index_map_keys_create('test', 'demo', 'numeric_map',
+
+        try:
+            client.index_integer_create('test', 'demo', 'test_age',
+                                        'age_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_string_create('test', 'demo', 'addr',
+                                       'addr_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_integer_create('test', 'demo', 'age1',
+                                        'age_index1')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_list_create('test', 'demo', 'numeric_list',
                                      aerospike.INDEX_NUMERIC,
-                                     'numeric_map_index')
-        client.index_map_keys_create('test', 'demo', 'string_map',
+                                     'numeric_list_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_list_create('test', 'demo', 'string_list',
                                      aerospike.INDEX_STRING,
-                                     'string_map_index')
-        client.index_map_values_create('test', 'demo', 'numeric_map',
-                                       aerospike.INDEX_NUMERIC,
-                                       'numeric_map_values_index')
-        client.index_map_values_create('test', 'demo', 'string_map',
-                                       aerospike.INDEX_STRING,
-                                       'string_map_values_index')
-        client.index_integer_create('test', None, 'test_age_none',
-                                    'age_index_none')
-        client.index_integer_create('test', 'demo',
-                                    bytearray("sal\0kj", "utf-8"),
-                                    'sal_index')
+                                     'string_list_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_map_keys_create('test', 'demo', 'numeric_map',
+                                         aerospike.INDEX_NUMERIC,
+                                         'numeric_map_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_map_keys_create('test', 'demo', 'string_map',
+                                         aerospike.INDEX_STRING,
+                                         'string_map_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_map_values_create('test', 'demo', 'numeric_map',
+                                           aerospike.INDEX_NUMERIC,
+                                           'numeric_map_values_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_map_values_create('test', 'demo', 'string_map',
+                                           aerospike.INDEX_STRING,
+                                           'string_map_values_index')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_integer_create('test', None, 'test_age_none',
+                                        'age_index_none')
+        except e.IndexFoundError:
+            pass
+
+        try:
+            client.index_integer_create('test', 'demo',
+                                        bytearray("sal\0kj", "utf-8"),
+                                        'sal_index')
+        except e.IndexFoundError:
+            pass
+
         client.close()
 
     def teardown_class(cls):
         client = TestBaseClass.get_new_connection()
 
         policy = {}
-        client.index_remove('test', 'age_index', policy)
-        client.index_remove('test', 'age_index1', policy)
-        client.index_remove('test', 'addr_index', policy)
-        client.index_remove('test', 'numeric_list_index', policy)
-        client.index_remove('test', 'string_list_index', policy)
-        client.index_remove('test', 'numeric_map_index', policy)
-        client.index_remove('test', 'string_map_index', policy)
-        client.index_remove('test', 'numeric_map_values_index', policy)
-        client.index_remove('test', 'string_map_values_index', policy)
-        client.index_remove('test', 'age_index_none', policy)
-        client.index_remove('test', 'sal_index')
+        try:
+            client.index_remove('test', 'age_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'age_index1', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'addr_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'numeric_list_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'string_list_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'numeric_map_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'string_map_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'numeric_map_values_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'string_map_values_index', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'age_index_none', policy)
+        except e.IndexNotFound:
+            pass
+
+        try:
+            client.index_remove('test', 'sal_index')
+        except e.IndexNotFound:
+            pass
         client.close()
 
     @pytest.fixture(autouse=True)
@@ -693,13 +781,14 @@ class TestQuery(TestBaseClass):
         """
             Invoke query() with invalid policy passed to foreach
         """
-        policy = {'timeout': ""}
+        policy = {'total_timeout': ""}
         query = self.as_connection.query('test', 'demo')
         query.select('name', 'test_age')
         query.where(p.equals('test_age', 1))
 
         def callback(input_tuple):
             _, metadata, _ = input_tuple
+            print(metadata)
             assert metadata['gen'] is None
 
         with pytest.raises(e.ParamError) as err_info:

@@ -217,12 +217,15 @@ class TestMapValuesIndex(object):
             'test_numeric_map_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
-        retobj = self.as_connection.index_map_values_create(
-            'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
-            'test_numeric_map_index', policy)
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_map_values_create(
+                'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
+                'test_numeric_map_index', policy)
+            self.as_connection.index_remove(
+                'test', 'test_numeric_map_index', policy)
+
         self.as_connection.index_remove(
             'test', 'test_numeric_map_index', policy)
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_same_mapvaluesindex_multiple_times_different_bin(self):
         """
@@ -236,10 +239,12 @@ class TestMapValuesIndex(object):
             'test_string_map_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
-        retobj = self.as_connection.index_map_values_create(
-            'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
-            'test_string_map_index', policy)
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_map_values_create(
+                'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
+                'test_string_map_index', policy)
+            self.as_connection.index_remove(
+                'test', 'test_string_map_index', policy)
 
         self.as_connection.index_remove(
             'test', 'test_string_map_index', policy)
@@ -255,16 +260,17 @@ class TestMapValuesIndex(object):
             'test_string_map_index', policy)
 
         assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_map_values_create(
+                'test', 'demo', 'string_map', aerospike.INDEX_STRING,
+                'test_string_map_index1', policy)
+            self.as_connection.index_remove(
+                'test', 'test_string_map_index1', policy)
+            self.as_connection.index_remove(
+                'test', 'test_string_map_index', policy)
 
-        retobj = self.as_connection.index_map_values_create(
-            'test', 'demo', 'string_map', aerospike.INDEX_STRING,
-            'test_string_map_index1', policy)
-
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove(
             'test', 'test_string_map_index', policy)
-        self.as_connection.index_remove(
-            'test', 'test_string_map_index1', policy)
 
     def test_createmapvaluesindex_with_policy(self):
         """

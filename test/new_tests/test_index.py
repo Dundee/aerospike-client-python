@@ -181,13 +181,12 @@ class TestIndex(object):
         retobj = self.as_connection.index_integer_create('test', 'demo', 'age',
                                                          'age_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
-
-        retobj = self.as_connection.index_integer_create(
-            'test', 'demo', 'age', 'age_index', policy)
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_integer_create(
+                'test', 'demo', 'age', 'age_index', policy)
+            self.as_connection.index_remove('test', 'age_index', policy)
 
         self.as_connection.index_remove('test', 'age_index', policy)
-
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_same_integer_index_multiple_times_different_bin(self):
         """
@@ -200,10 +199,10 @@ class TestIndex(object):
 
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
-        retobj = self.as_connection.index_integer_create(
-            'test', 'demo', 'no', 'age_index', policy)
-
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_integer_create(
+                'test', 'demo', 'no', 'age_index', policy)
+            self.as_connection.index_remove('test', 'age_index', policy)
 
         self.as_connection.index_remove('test', 'age_index', policy)
 
@@ -217,12 +216,12 @@ name
             'test', 'demo', 'age', 'age_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
-        retobj = self.as_connection.index_integer_create(
-            'test', 'demo', 'age', 'age_index1', policy)
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_integer_create(
+                'test', 'demo', 'age', 'age_index1', policy)
+            self.as_connection.index_remove('test', 'age_index1', policy)
 
         self.as_connection.index_remove('test', 'age_index', policy)
-        self.as_connection.index_remove('test', 'age_index1', policy)
 
     def test_create_integer_index_with_policy(self):
         """
@@ -243,8 +242,8 @@ name
         retobj = self.as_connection.index_string_create('test', 'demo', 'name',
                                                         'name_index', policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'name_index', policy)
+        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_string_index_with_set_length_too_long(self):
             # Invoke createindex() with correct arguments set length extra
@@ -290,8 +289,8 @@ name
         retobj = self.as_connection.index_string_create(
             'test', 'demo1', 'name', 'name_index', policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'name_index', policy)
+        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_string_index_with_incorrect_bin(self):
         """
@@ -301,8 +300,8 @@ name
         retobj = self.as_connection.index_string_create(
             'test', 'demo', 'name1', 'name_index', policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'name_index', policy)
+        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_string_index_with_namespace_is_none(self):
         """
@@ -322,8 +321,8 @@ name
         retobj = self.as_connection.index_string_create(
             'test', None, 'name', 'name_index', policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'name_index', policy)
+        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_string_index_with_bin_is_none(self):
         """
@@ -358,9 +357,10 @@ name
             'test', 'demo', 'name', 'name_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
-        retobj = self.as_connection.index_string_create(
-            'test', 'demo', 'name', 'name_index', policy)
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_string_create(
+                'test', 'demo', 'name', 'name_index', policy)
+            self.as_connection.index_remove('test', 'name_index', policy)
         self.as_connection.index_remove('test', 'name_index', policy)
 
     def test_create_same_string_index_multiple_times_different_bin(self):
@@ -371,10 +371,12 @@ name
         retobj = self.as_connection.index_string_create('test', 'demo', 'name',
                                                         'name_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
-        retobj = self.as_connection.index_string_create(
-            'test', 'demo', 'addr', 'name_index', policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_string_create(
+                'test', 'demo', 'addr', 'name_index', policy)
+            self.as_connection.index_remove('test', 'name_index', policy)
+
         self.as_connection.index_remove('test', 'name_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
@@ -387,12 +389,12 @@ name
         retobj = self.as_connection.index_string_create('test', 'demo', 'name',
                                                         'name_index', policy)
         assert retobj == AerospikeStatus.AEROSPIKE_OK
-        retobj = self.as_connection.index_string_create(
-            'test', 'demo', 'name', 'name_index1', policy)
+        with pytest.raises(e.IndexFoundError):
+            retobj = self.as_connection.index_string_create(
+                'test', 'demo', 'name', 'name_index1', policy)
+            self.as_connection.index_remove('test', 'name_index1', policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'name_index', policy)
-        self.as_connection.index_remove('test', 'name_index1', policy)
 
     def test_create_string_index_with_policy(self):
         """
@@ -410,9 +412,9 @@ name
             Invoke drop invalid index()
         """
         policy = {}
-        retobj = self.as_connection.index_remove('test', 'notarealindex',
-                                                 policy)
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexNotFound):
+            retobj = self.as_connection.index_remove('test', 'notarealindex',
+                                                     policy)
 
     def test_drop_valid_index(self):
         """

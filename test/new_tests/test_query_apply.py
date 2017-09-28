@@ -15,10 +15,17 @@ except:
 
 
 def add_indexes_to_client(client):
-    client.index_integer_create('test', 'demo', 'age',
-                                'test_demo_age_idx')
-    client.index_integer_create('test', None, 'age',
-                                'test_null_age_idx')
+    try:
+        client.index_integer_create('test', 'demo', 'age',
+                                    'test_demo_age_idx')
+    except e.IndexFoundError:
+        pass
+
+    try:
+        client.index_integer_create('test', None, 'age',
+                                    'test_null_age_idx')
+    except e.IndexFoundError:
+        pass
 
 
 def add_test_udf(client):

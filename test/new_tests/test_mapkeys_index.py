@@ -6,6 +6,8 @@ from .test_base_class import TestBaseClass
 from .as_status_codes import AerospikeStatus
 from aerospike import exception as e
 
+import pdb
+
 aerospike = pytest.importorskip("aerospike")
 try:
     import aerospike
@@ -234,12 +236,11 @@ class TestMapKeysIndex(object):
         '''
         Test with various conditions raising paramerrors
         '''
+
         with pytest.raises(e.ParamError) as err_info:
             self.as_connection.index_map_keys_create(
                 ns, test_set, test_bin, index_type, index_name, policy)
-
-        err_code = err_info.value.code
-        assert err_code == AerospikeStatus.AEROSPIKE_ERR_PARAM
+            self.as_connection.index_remove(ns, index_name)
 
     def test_mapkeysindex_with_set_is_none(self):
         """
@@ -252,6 +253,7 @@ class TestMapKeysIndex(object):
             'test_string_map_index', policy)
 
         assert response_code == AerospikeStatus.AEROSPIKE_OK
+        self.as_connection.index_remove("test", 'test_string_map_index')
 
     def test_create_same_mapindex_multiple_times(self):
         """
@@ -259,13 +261,17 @@ class TestMapKeysIndex(object):
             multiple times on same bin
         """
         policy = {}
-        #  Create the same index 3 times
-        for _ in range(3):
+        response_code = self.as_connection.index_map_keys_create(
+            'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
+            'test_numeric_map_index', policy)
+        assert response_code == AerospikeStatus.AEROSPIKE_OK
+
+        with pytest.raises(e.IndexFoundError):
             response_code = self.as_connection.index_map_keys_create(
                 'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
                 'test_numeric_map_index', policy)
-            assert response_code == AerospikeStatus.AEROSPIKE_OK
-
+            self.as_connection.index_remove('test', 'test_numeric_map_index',
+                                            policy)
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
 
@@ -281,10 +287,10 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
 
         # Create a different index with the same name
-        response_code = self.as_connection.index_map_keys_create(
-            'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
-            'test_string_map_index', policy)
-        assert response_code == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            response_code = self.as_connection.index_map_keys_create(
+                'test', 'demo', 'numeric_map', aerospike.INDEX_NUMERIC,
+                'test_string_map_index', policy)
 
         # Cleanup the index
         self.as_connection.index_remove(
@@ -297,14 +303,18 @@ class TestMapKeysIndex(object):
         policy = {}
         index_names = ('test_string_map_index', 'test_string_map_index1')
 
-        for index_name in index_names:
-            response_code = self.as_connection.index_map_keys_create(
-                'test', 'demo', 'string_map', aerospike.INDEX_STRING,
-                index_name, policy)
-            assert response_code == AerospikeStatus.AEROSPIKE_OK
+        with pytest.raises(e.IndexFoundError):
+            for index_name in index_names:
+                response_code = self.as_connection.index_map_keys_create(
+                    'test', 'demo', 'string_map', aerospike.INDEX_STRING,
+                    index_name, policy)
+                assert response_code == AerospikeStatus.AEROSPIKE_OK
 
         for index_name in index_names:
-            self.as_connection.index_remove('test', index_name, policy)
+            try:
+                self.as_connection.index_remove('test', index_name, policy)
+            except:
+                pass
 
     def test_createmapindex_with_policy(self):
         """
