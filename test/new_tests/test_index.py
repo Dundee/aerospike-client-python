@@ -3,7 +3,9 @@
 import pytest
 import sys
 from .as_status_codes import AerospikeStatus
+from .index_helpers import ensure_dropped_index
 from aerospike import exception as e
+
 
 aerospike = pytest.importorskip("aerospike")
 try:
@@ -186,7 +188,7 @@ class TestIndex(object):
                 'test', 'demo', 'age', 'age_index', policy)
             self.as_connection.index_remove('test', 'age_index', policy)
 
-        self.as_connection.index_remove('test', 'age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'age_index')
 
     def test_create_same_integer_index_multiple_times_different_bin(self):
         """
@@ -204,7 +206,7 @@ class TestIndex(object):
                 'test', 'demo', 'no', 'age_index', policy)
             self.as_connection.index_remove('test', 'age_index', policy)
 
-        self.as_connection.index_remove('test', 'age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'age_index')
 
     def test_create_different_integer_index_multiple_times_same_bin(self):
         """
@@ -221,7 +223,7 @@ name
                 'test', 'demo', 'age', 'age_index1', policy)
             self.as_connection.index_remove('test', 'age_index1', policy)
 
-        self.as_connection.index_remove('test', 'age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'age_index')
 
     def test_create_integer_index_with_policy(self):
         """
@@ -231,8 +233,8 @@ name
         retobj = self.as_connection.index_integer_create('test', 'demo', 'age',
                                                          'age_index', policy)
 
+        ensure_dropped_index(self.as_connection, 'test', 'age_index')
         assert retobj == AerospikeStatus.AEROSPIKE_OK
-        self.as_connection.index_remove('test', 'age_index', policy)
 
     def test_create_string_index_positive(self):
         """
@@ -243,6 +245,8 @@ name
                                                         'name_index', policy)
 
         self.as_connection.index_remove('test', 'name_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'name_index')
+
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_string_index_with_set_length_too_long(self):
@@ -361,7 +365,9 @@ name
             retobj = self.as_connection.index_string_create(
                 'test', 'demo', 'name', 'name_index', policy)
             self.as_connection.index_remove('test', 'name_index', policy)
+
         self.as_connection.index_remove('test', 'name_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'name_index')
 
     def test_create_same_string_index_multiple_times_different_bin(self):
         """
@@ -378,6 +384,8 @@ name
             self.as_connection.index_remove('test', 'name_index', policy)
 
         self.as_connection.index_remove('test', 'name_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'name_index')
+
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_create_different_string_index_multiple_times_same_bin(self):
@@ -395,6 +403,7 @@ name
             self.as_connection.index_remove('test', 'name_index1', policy)
 
         self.as_connection.index_remove('test', 'name_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'name_index')
 
     def test_create_string_index_with_policy(self):
         """
@@ -406,6 +415,7 @@ name
 
         assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'name_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'name_index')
 
     def test_drop_invalid_index(self):
         """
@@ -424,6 +434,7 @@ name
         self.as_connection.index_integer_create('test', 'demo', 'age',
                                                 'age_index', policy)
         retobj = self.as_connection.index_remove('test', 'age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'age_index')
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_drop_valid_index_policy(self):
@@ -434,6 +445,7 @@ name
         self.as_connection.index_integer_create('test', 'demo', 'age',
                                                 'age_index', policy)
         retobj = self.as_connection.index_remove('test', 'age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'age_index')
         assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_createindex_with_long_index_name(self):
@@ -453,8 +465,9 @@ name
                                                         u'uni_name_index',
                                                         policy)
 
-        assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', u'uni_name_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', u'uni_name_index')
+        assert retobj == AerospikeStatus.AEROSPIKE_OK
 
     def test_createindex_integer_unicode(self):
         """
@@ -468,6 +481,7 @@ name
 
         assert retobj == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', u'uni_age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', u'uni_age_index')
 
     def test_createindex_with_correct_parameters_without_connection(self):
             # Invoke createindex() with correct arguments without connection

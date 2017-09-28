@@ -5,6 +5,7 @@ import sys
 from .test_base_class import TestBaseClass
 from .as_status_codes import AerospikeStatus
 from aerospike import exception as e
+from .index_helpers import ensure_dropped_index
 
 import pdb
 
@@ -79,6 +80,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_string_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_string_map_index')
 
     def test_mapkeysindex_with_correct_parameters_numeric(self):
         """
@@ -92,6 +94,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_numeric_map_index')
 
     def test_mapkeysindex_with_correct_parameters_numeric_on_stringkeys(self):
         """
@@ -105,6 +108,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_numeric_map_index')
 
     def test_mapkeysindex_with_correct_parameters_string_on_numerickeys(self):
         """
@@ -118,6 +122,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_numeric_map_index')
 
     @pytest.mark.parametrize(
         "ns, test_set, test_bin, index_name",
@@ -174,6 +179,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_numeric_map_index')
 
     def test_mapkeysindex_on_nonexistent_bin(self):
         """
@@ -187,6 +193,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_string_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_string_map_index')
 
     @pytest.mark.parametrize(
         "ns, test_set, test_bin, index_type, index_name, policy",
@@ -241,6 +248,7 @@ class TestMapKeysIndex(object):
             self.as_connection.index_map_keys_create(
                 ns, test_set, test_bin, index_type, index_name, policy)
             self.as_connection.index_remove(ns, index_name)
+            ensure_dropped_index(self.as_connection, ns, index_name)
 
     def test_mapkeysindex_with_set_is_none(self):
         """
@@ -254,6 +262,7 @@ class TestMapKeysIndex(object):
 
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove("test", 'test_string_map_index')
+        ensure_dropped_index(self.as_connection, 'test', 'test_string_map_index')
 
     def test_create_same_mapindex_multiple_times(self):
         """
@@ -274,6 +283,7 @@ class TestMapKeysIndex(object):
                                             policy)
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_numeric_map_index')
 
     def test_create_same_mapindex_multiple_times_different_bin(self):
         """
@@ -295,6 +305,7 @@ class TestMapKeysIndex(object):
         # Cleanup the index
         self.as_connection.index_remove(
             'test', 'test_string_map_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_string_map_index')
 
     def test_create_different_mapindex_multiple_times_same_bin(self):
         """
@@ -313,6 +324,7 @@ class TestMapKeysIndex(object):
         for index_name in index_names:
             try:
                 self.as_connection.index_remove('test', index_name, policy)
+                ensure_dropped_index(self.as_connection, 'test', index_name)
             except:
                 pass
 
@@ -328,6 +340,7 @@ class TestMapKeysIndex(object):
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', 'test_numeric_map_index',
                                         policy)
+        ensure_dropped_index(self.as_connection, 'test', 'test_numeric_map_index')
 
     def test_create_map_integer_index_unicode(self):
         """
@@ -340,6 +353,7 @@ class TestMapKeysIndex(object):
 
         assert response_code == AerospikeStatus.AEROSPIKE_OK
         self.as_connection.index_remove('test', u'uni_age_index', policy)
+        ensure_dropped_index(self.as_connection, 'test', u'uni_age_index')
 
     def test_mapkeysindex_with_correct_parameters_no_connection(self):
         """
