@@ -251,7 +251,7 @@ a cluster-tending thread.
 
             config = {
                 'hosts': [ ('127.0.0.1', 3000) ],
-                'timeout': 1500
+                'total_timeout': 1500
             }
             client = aerospike.client(config).connect()
             try:
@@ -309,7 +309,7 @@ a cluster-tending thread.
 
     .. method:: touch(key[, val=0[, meta[, policy]]])
 
-        Touch the given record, resetting its \
+        Touch the given record, setting its \
         `time-to-live <http://www.aerospike.com/docs/client/c/usage/kvs/write.html#change-record-time-to-live-ttl>`_ \
         and incrementing its generation.
 
@@ -330,7 +330,7 @@ a cluster-tending thread.
             client = aerospike.client(config).connect()
 
             key = ('test', 'demo', 1)
-            client.touch(key, 120, policy={'timeout': 100})
+            client.touch(key, 120, policy={'total_timeout': 100})
             client.close()
 
 
@@ -445,7 +445,7 @@ a cluster-tending thread.
 
             try:
                 key = ('test', 'demo', 1)
-                client.append(key, 'name', ' jr.', policy={'timeout': 1200})
+                client.append(key, 'name', ' jr.', policy={'total_timeout': 1200})
             except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
@@ -479,7 +479,7 @@ a cluster-tending thread.
 
             try:
                 key = ('test', 'demo', 1)
-                client.prepend(key, 'name', 'Dr. ', policy={'timeout': 1200})
+                client.prepend(key, 'name', 'Dr. ', policy={'total_timeout': 1200})
             except ex.AerospikeError as e:
                 print("Error: {0} [{1}]".format(e.msg, e.code))
                 sys.exit(1)
@@ -1394,7 +1394,7 @@ a cluster-tending thread.
                       "bin": "career"
                     }
                 ]
-                (key, meta, bins) = client.operate(key, ops, {'ttl':360}, {'timeout':500})
+                (key, meta, bins) = client.operate(key, ops, {'ttl':360}, {'total_timeout':500})
 
                 print(key)
                 print('--------------------------')
@@ -1498,7 +1498,7 @@ a cluster-tending thread.
                 try:
                     key = ('test', 'demo', 1)
                     policy = {
-                        'timeout': 1000,
+                        'total_timeout': 1000,
                         'key': aerospike.POLICY_KEY_SEND,
                         'commit_level': aerospike.POLICY_COMMIT_LEVEL_MASTER
                     }
@@ -2620,11 +2620,11 @@ Write Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** write timeout in milliseconds
+        * **total_timeout** write timeout in milliseconds
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **exists** one of the ``aerospike.POLICY_EXISTS_*`` values such as :data:`aerospike.POLICY_EXISTS_CREATE`
         * **gen** one of the ``aerospike.POLICY_GEN_*`` values such as :data:`aerospike.POLICY_GEN_IGNORE`
-        * **retry** one of the ``aerospike.POLICY_RETRY_*`` values such as :data:`aerospike.POLICY_RETRY_NONE`
+        * **max_retries** integer, number of times to attempt to retry. Default `2`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **durable_delete** boolean value: True to perform durable delete (requires Enterprise server version >= 3.10)
 
@@ -2640,7 +2640,7 @@ Read Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** read timeout in milliseconds
+        * **total_timeout** read timeout in milliseconds
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **consistency_level** one of the ``aerospike.POLICY_CONSISTENCY_*`` values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
         * **replica** one of the ``aerospike.POLICY_REPLICA_*`` values such as :data:`aerospike.POLICY_REPLICA_MASTER`
@@ -2657,11 +2657,11 @@ Operate Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** timeout for the operation in milliseconds
+        * **total_timeout** timeout for the operation in milliseconds
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **gen** one of the ``aerospike.POLICY_GEN_*`` values such as :data:`aerospike.POLICY_GEN_IGNORE`
         * **replica** one of the ``aerospike.POLICY_REPLICA_*`` values such as :data:`aerospike.POLICY_REPLICA_MASTER`
-        * **retry** one of the ``aerospike.POLICY_RETRY_*`` values such as :data:`aerospike.POLICY_RETRY_NONE`
+        * **max_retries** integer, number of times to attempt to retry. Default `2`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **consistency_level** one of the ``aerospike.POLICY_CONSISTENCY_*`` values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
         * **durable_delete** boolean value: True to perform durable delete (requires Enterprise server version >= 3.10)
@@ -2678,7 +2678,7 @@ Apply Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** timeout for the apply operation in milliseconds
+        * **total_timeout** timeout for the apply operation in milliseconds
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **durable_delete** boolean value: True to perform durable delete (requires Enterprise server version >= 3.10)
@@ -2695,11 +2695,11 @@ Remove Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** write timeout in milliseconds
+        * **total_timeout** write timeout in milliseconds
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **gen** one of the ``aerospike.POLICY_GEN_*`` values such as :data:`aerospike.POLICY_GEN_IGNORE`
-        * **retry** one of the ``aerospike.POLICY_RETRY_*`` values such as :data:`aerospike.POLICY_RETRY_NONE`
+        * **max_retries** integer, number of times to retry the operation if it fails due to netowrk error. Default `2`
         * **durable_delete** boolean value: True to perform durable delete (requires Enterprise server version >= 3.10)
 
 .. _aerospike_batch_policies:
@@ -2716,11 +2716,10 @@ Batch Policies
     .. hlist::
         :columns: 1
 
-        * **timeout** read timeout in milliseconds
-        * **retry** Maximum number of retries when a transaction fails due to a network error. Default: `1`
+        * **total_timeout** read timeout in milliseconds
+        * **max_retries** integer, number of times to retry the operation if it fails due to netowrk error. Default `2`
         * **sleep_between_retries** Milliseconds to sleep between retries. Default: `0` (do not sleep)
         * **consistency_level** one of the ``aerospike.POLICY_CONSISTENCY_*`` values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
-        * **retry_on_timeout** :class:`bool`  Should the client retry a command if the timeout is reached. `False`: Return error when the timeout has been reached. Note that retries can still occur if a command fails on a network error before the timeout has been reached. `True` Retry command with same timeout when the timeout has been reached.  The maximum number of retries is defined by `retry`. Default `False`
         * **concurrent** :class:`bool` Determine if batch commands to each server are run in parallel threads. Default `False`
         * **allow_inline** :class:`bool` . Allow batch to be processed immediately in the server's receiving thread when the server deems it to be appropriate.  If `False`, the batch will always be processed in separate transaction threads.  This field is only relevant for the new batch index protocol. Default `True`.
         * **send_set_name** :class:`bool` Send set name field to server for every key in the batch for batch index protocol. This is only necessary when authentication is enabled and security roles are defined on a per set basis. Default: `False`

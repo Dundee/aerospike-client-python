@@ -53,11 +53,11 @@ in an in-memory primary index.
                 * **system_path** the location of the system modules such as ``aerospike.lua`` (default: ``/usr/local/aerospike/lua``)
                 * **user_path** the location of the user's record and stream UDFs . (default: ``./``)
             * **policies** a :class:`dict` of policies
-                * **timeout** default connection timeout in milliseconds
+                * **total_timeout** default connection timeout in milliseconds
                 * **key** default key policy, with values such as :data:`aerospike.POLICY_KEY_DIGEST`
                 * **exists** default exists policy, with values such as :data:`aerospike.POLICY_EXISTS_CREATE`
                 * **gen** default generation policy, with values such as :data:`aerospike.POLICY_GEN_IGNORE`
-                * **retry** default retry policy, with values such as :data:`aerospike.POLICY_RETRY_NONE`
+                * **max_retries** default retry policy, with values such as :data:`aerospike.POLICY_RETRY_NONE`
                 * **consistency_level** default consistency level policy, with values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
                 * **replica** default replica policy, with values such as :data:`aerospike.POLICY_REPLICA_MASTER`
                 * **commit_level** default commit level policy, with values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
@@ -111,7 +111,7 @@ in an in-memory primary index.
         # which is appropriate for a multi-process context, such as a webserver
         config = {
             'hosts':    [ ('127.0.0.1', 3000) ],
-            'policies': {'timeout': 1000},
+            'policies': {'total_timeout': 1000},
             'shm':      { }}
         client = aerospike.client(config)
 
