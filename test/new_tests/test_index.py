@@ -30,6 +30,8 @@ class TestIndex(object):
             as_connection.put(key, rec)
 
         def teardown():
+            ensure_dropped_index(self.as_connection, 'test', 'age_index')
+            ensure_dropped_index(self.as_connection, 'test', 'name_index')
             for i in range(5):
                 key = ('test', u'demo', i)
                 rec = {
