@@ -18,7 +18,7 @@ def ensure_dropped_index(client, namespace, index_name):
     try:
         client.index_remove(namespace, index_name)
     except e.IndexNotFound:
-        return
+        pass
     retries = 0
     while retries < 10:
         responses = client.info("sindex")
