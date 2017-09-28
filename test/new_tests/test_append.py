@@ -427,7 +427,5 @@ class TestAppend(object):
         policy = {'gen': 5,
                   'timeout': 300,
                   }
-        try:
+        with pytest.raises(e.ClientError):
             self.as_connection.append(key, "name", "str", {}, policy)
-        except e.NamespaceNotFound as exception:
-            assert exception.code == 20

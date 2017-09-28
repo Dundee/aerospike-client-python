@@ -54,9 +54,10 @@ class TestListIndex(object):
             'test', 'demo', 'string_list', aerospike.INDEX_STRING,
             'test_string_list_index', policy)
 
-        assert retobj == 0
         self.as_connection.index_remove('test', 'test_string_list_index',
                                         policy)
+
+        assert retobj == 0
 
     def test_pos_listindex_with_correct_parameters_numeric(self):
         """
@@ -110,14 +111,16 @@ class TestListIndex(object):
             'test', 'demo', 'numeric_list', aerospike.INDEX_NUMERIC,
             'test_numeric_list_index', policy)
         if retobj == 0:
-            retobj = self.as_connection.index_list_create(
-                'test', 'demo', 'numeric_list', aerospike.INDEX_NUMERIC,
-                'test_numeric_list_index', policy)
+            with pytest.raises(e.IndexFoundError):
+                self.as_connection.index_list_create(
+                    'test', 'demo', 'numeric_list', aerospike.INDEX_NUMERIC,
+                    'test_numeric_list_index', policy)
+                self.as_connection.index_remove(
+                    'test', 'test_numeric_list_index', policy)
             self.as_connection.index_remove(
                 'test', 'test_numeric_list_index', policy)
-            assert retobj == 0
         else:
-            assert True is False
+            assert False
 
     def test_pos_create_same_listindex_multiple_times_different_bin(self):
         """
@@ -128,10 +131,13 @@ class TestListIndex(object):
             'test', 'demo', 'string_list', aerospike.INDEX_STRING,
             'test_string_list_index', policy)
         if retobj == 0:
-            retobj = self.as_connection.index_list_create(
-                'test', 'demo', 'numeric_list', aerospike.INDEX_NUMERIC,
-                'test_string_list_index', policy)
-            assert retobj == 0
+            with pytest.raises(e.IndexFoundError):
+                retobj = self.as_connection.index_list_create(
+                    'test', 'demo', 'numeric_list', aerospike.INDEX_NUMERIC,
+                    'test_string_list_index', policy)
+                self.as_connection.index_remove('test', 'test_string_list_index',
+                                                policy)
+
             self.as_connection.index_remove('test', 'test_string_list_index',
                                             policy)
         else:
@@ -147,14 +153,15 @@ name
             'test', 'demo', 'string_list', aerospike.INDEX_STRING,
             'test_string_list_index', policy)
         if retobj == 0:
-            retobj = self.as_connection.index_list_create(
-                'test', 'demo', 'string_list', aerospike.INDEX_STRING,
-                'test_string_list_index1', policy)
-            assert retobj == 0
+            with pytest.raises(e.IndexFoundError):
+                retobj = self.as_connection.index_list_create(
+                    'test', 'demo', 'string_list', aerospike.INDEX_STRING,
+                    'test_string_list_index1', policy)
+                self.as_connection.index_remove(
+                    'test', 'test_string_list_index1', policy)
+
             self.as_connection.index_remove('test', 'test_string_list_index',
                                             policy)
-            self.as_connection.index_remove(
-                'test', 'test_string_list_index1', policy)
         else:
             assert True is False
 
@@ -164,11 +171,11 @@ name
         """
         policy = {'timeout': 1000}
         retobj = self.as_connection.index_list_create(
-            'test', 'demo', 'numeric_list', aerospike.INDEX_NUMERIC,
-            'test_numeric_list_index', policy)
+            'test', 'demo', 'num_list_pol', aerospike.INDEX_NUMERIC,
+            'test_numeric_list_index_pol', policy)
 
         assert retobj == 0
-        self.as_connection.index_remove('test', 'test_numeric_list_index',
+        self.as_connection.index_remove('test', 'test_numeric_list_index_pol',
                                         policy)
 
     def test_pos_createlistindex_with_policystring(self):

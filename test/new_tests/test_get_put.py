@@ -196,11 +196,8 @@ class TestGetPut():
         """
         key = ('namespace', 'demo', 1)
 
-        try:
+        with pytest.raises(e.ClientError):
             key, _, _ = self.as_connection.get(key)
-
-        except e.NamespaceNotFound as exception:
-            assert exception.code == 20
 
     @pytest.mark.parametrize("_input, _expected", [
         (('test', 'demo', 1), {'name': 'john', 'age': 1}),
@@ -515,7 +512,7 @@ class TestGetPut():
             typeError.value)
 
     @pytest.mark.parametrize("key, ex_code, ex_msg", test_data.key_neg)
-    def test_neg_put_with_none(self, key, ex_code, ex_msg, record = {}):
+    def test_neg_put_with_none(self, key, ex_code, ex_msg, record={}):
         """
             Invoke put() with invalid data
         """
@@ -528,8 +525,8 @@ class TestGetPut():
             assert exception.msg == ex_msg
 
     @pytest.mark.parametrize("key, ex_code, ex_msg, record", [
-        (("test", "demo", None), \
-          -2, "either key or digest is required", {"name": "John"}),
+        (("test", "demo", None),
+         -2, "either key or digest is required", {"name": "John"}),
         ])
     def test_neg_put_with_invalid_record(self, key, ex_code, ex_msg, record):
         """
@@ -542,6 +539,7 @@ class TestGetPut():
         except e.ParamError as exception:
             assert exception.code == ex_code
             assert exception.msg == ex_msg
+
     @pytest.mark.parametrize("key, record, exception_code", [
         # Non-existing NS & Set
         (('demo', 'test', 1), {
@@ -554,11 +552,8 @@ class TestGetPut():
         """
             Invoke put() with non-existent data
         """
-        try:
+        with pytest.raises(e.ClientError):
             self.as_connection.put(key, record)
-
-        except e.NamespaceNotFound as exception:
-            assert exception.code == exception_code
 
     def test_neg_put_with_policy_gen_EQ_less(self):
         """

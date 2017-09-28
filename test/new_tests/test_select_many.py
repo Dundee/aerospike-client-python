@@ -355,7 +355,7 @@ class TestSelectMany(object):
 
     def test_select_many_with_invalid_timeout(self):
 
-        policies = {'timeout': 0.2}
+        policies = {'total_timeout': 0.2}
         with pytest.raises(e.ParamError) as err_info:
             self.as_connection.select_many(self.keys, [], policies)
 
