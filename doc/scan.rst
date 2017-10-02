@@ -30,12 +30,13 @@ Scan Class --- :class:`Scan`
         not appear in the *bins* portion of that record tuple.
 
 
-    .. method:: results([policy]) -> list of (key, meta, bins)
+    .. method:: results([policy[, nodename]]) -> list of (key, meta, bins)
 
         Buffer the records resulting from the scan, and return them as a \
         :class:`list` of records.
 
         :param dict policy: optional :ref:`aerospike_scan_policies`.
+        :param :class:`str` nodename: optional name of node used to limit the scan to a single node.
         :return: a :class:`list` of :ref:`aerospike_record_tuple`.
 
         .. code-block:: python
@@ -78,7 +79,7 @@ Scan Class --- :class:`Scan`
                     { 'a': 1, 'id': 1})]
 
 
-    .. method:: foreach(callback[, policy[, options]])
+    .. method:: foreach(callback[, policy[, options[, nodename]]])
 
         Invoke the *callback* function for each of the records streaming back \
         from the scan.
@@ -87,6 +88,7 @@ Scan Class --- :class:`Scan`
         :param dict policy: optional :ref:`aerospike_scan_policies`.
         :param dict options: the :ref:`aerospike_scan_options` that will apply \
            to the scan.
+        :param :class:`str` nodename: optional name of node used to limit the scan to a single node.
 
         .. note:: A :ref:`aerospike_record_tuple` is passed as the argument to the callback function.
 
