@@ -740,55 +740,9 @@ static int AerospikeClient_Type_Init(AerospikeClient * self, PyObject * args, Py
 		 * Set the individual policy groups new in 3.0
 		 * */
 
-		 as_status set_policy_status = AEROSPIKE_OK;
-
-		 PyObject* read_policy = PyDict_GetItemString(py_policies, "read");
-		 set_policy_status = set_read_policy(&config.policies.read, read_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* write_policy = PyDict_GetItemString(py_policies, "write");
-		 set_policy_status = set_write_policy(&config.policies.write, write_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* apply_policy = PyDict_GetItemString(py_policies, "apply");
-		 set_policy_status = set_apply_policy(&config.policies.apply, apply_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* remove_policy = PyDict_GetItemString(py_policies, "remove");
-		 set_policy_status = set_remove_policy(&config.policies.remove, remove_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* query_policy = PyDict_GetItemString(py_policies, "query");
-		 set_policy_status = set_query_policy(&config.policies.query, query_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* scan_policy = PyDict_GetItemString(py_policies, "scan");
-		 set_policy_status = set_scan_policy(&config.policies.scan, scan_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* operate_policy = PyDict_GetItemString(py_policies, "operate");
-		 set_policy_status = set_operate_policy(&config.policies.operate, operate_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
-
-		 PyObject* batch_policy = PyDict_GetItemString(py_policies, "batch");
-		 set_policy_status = set_batch_policy(&config.policies.batch, batch_policy);
-		 if (set_policy_status != AEROSPIKE_OK) {
-			 return INIT_POLICY_PARAM_ERR;
-		 }
+		if (set_subpolicies(&config, py_policies) != AEROSPIKE_OK) {
+			return INIT_POLICY_PARAM_ERR;
+		}
 	}
 
 	// thread_pool_size

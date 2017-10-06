@@ -24,6 +24,7 @@ as_status set_optional_uint32_property(uint32_t* target_ptr, PyObject* policy_di
 as_status set_optional_bool_property(bool* target_ptr, PyObject* py_policy, const char* name);
 as_status set_base_policy(as_policy_base* base, PyObject* py_policy);
 
+as_status set_subpolicies(as_config* config, PyObject* py_policies);
 as_status set_read_policy(as_policy_read* read_policy, PyObject* py_policy);
 as_status set_write_policy(as_policy_write* write_policy, PyObject* py_policy);
 as_status set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy);
