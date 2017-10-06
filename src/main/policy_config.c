@@ -15,6 +15,65 @@
  ******************************************************************************/
 #include "policy_config.h"
 
+
+/*
+ * py_policies must exist, and be a dictionary
+ */
+as_status set_subpolicies(as_config* config, PyObject* py_policies) {
+
+	 as_status set_policy_status = AEROSPIKE_OK;
+
+	 PyObject* read_policy = PyDict_GetItemString(py_policies, "read");
+	 set_policy_status = set_read_policy(&config->policies.read, read_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* write_policy = PyDict_GetItemString(py_policies, "write");
+	 set_policy_status = set_write_policy(&config->policies.write, write_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* apply_policy = PyDict_GetItemString(py_policies, "apply");
+	 set_policy_status = set_apply_policy(&config->policies.apply, apply_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* remove_policy = PyDict_GetItemString(py_policies, "remove");
+	 set_policy_status = set_remove_policy(&config->policies.remove, remove_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* query_policy = PyDict_GetItemString(py_policies, "query");
+	 set_policy_status = set_query_policy(&config->policies.query, query_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* scan_policy = PyDict_GetItemString(py_policies, "scan");
+	 set_policy_status = set_scan_policy(&config->policies.scan, scan_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* operate_policy = PyDict_GetItemString(py_policies, "operate");
+	 set_policy_status = set_operate_policy(&config->policies.operate, operate_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 PyObject* batch_policy = PyDict_GetItemString(py_policies, "batch");
+	 set_policy_status = set_batch_policy(&config->policies.batch, batch_policy);
+	 if (set_policy_status != AEROSPIKE_OK) {
+		 return set_policy_status;
+	 }
+
+	 return AEROSPIKE_OK;
+}
+
 as_status set_read_policy(as_policy_read* read_policy, PyObject* py_policy) {
 
 	as_status status = AEROSPIKE_OK;
