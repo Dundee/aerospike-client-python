@@ -24,11 +24,11 @@ as_status set_optional_uint32_property(uint32_t* target_ptr, PyObject* policy_di
 as_status set_optional_bool_property(bool* target_ptr, PyObject* py_policy, const char* name);
 as_status set_base_policy(as_policy_base* base, PyObject* py_policy);
 
-void set_read_policy(as_policy_read* read_policy, PyObject* py_policy);
-void set_write_policy(as_policy_write* write_policy, PyObject* py_policy);
-void set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy);
-void set_remove_policy(as_policy_remove* remove_policy, PyObject* py_policy);
-void set_query_policy(as_policy_query* query_policy, PyObject* py_policy);
-void set_scan_policy(as_policy_scan* scan_policy, PyObject* py_policy);
-void set_operate_policy(as_policy_operate* operate_policy, PyObject* py_policy);
-void set_batch_policy(as_policy_batch* batch_policy, PyObject* py_policy);
+as_status set_read_policy(as_policy_read* read_policy, PyObject* py_policy);
+as_status set_write_policy(as_policy_write* write_policy, PyObject* py_policy);
+as_status set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy);
+as_status set_remove_policy(as_policy_remove* remove_policy, PyObject* py_policy);
+as_status set_query_policy(as_policy_query* query_policy, PyObject* py_policy);
+as_status set_scan_policy(as_policy_scan* scan_policy, PyObject* py_policy);
+as_status set_operate_policy(as_policy_operate* operate_policy, PyObject* py_policy);
+as_status set_batch_policy(as_policy_batch* batch_policy, PyObject* py_policy);

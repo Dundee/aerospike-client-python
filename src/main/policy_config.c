@@ -15,156 +15,335 @@
  ******************************************************************************/
 #include "policy_config.h"
 
-void set_read_policy(as_policy_read* read_policy, PyObject* py_policy) {
+as_status set_read_policy(as_policy_read* read_policy, PyObject* py_policy) {
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+	as_status status = AEROSPIKE_OK;
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
 
-	set_base_policy(&read_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_uint32_property((uint32_t*)&read_policy->key, py_policy, "key");
+	status = set_base_policy(&read_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&read_policy->replica, py_policy, "replica");
+	status = set_optional_uint32_property((uint32_t*)&read_policy->key, py_policy, "key");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&read_policy->consistency_level, py_policy, "consistency_level");
+	status = set_optional_uint32_property((uint32_t*)&read_policy->replica, py_policy, "replica");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&read_policy->deserialize, py_policy, "deserialize");
+	status = set_optional_uint32_property((uint32_t*)&read_policy->consistency_level, py_policy, "consistency_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
+	status = set_optional_bool_property(&read_policy->deserialize, py_policy, "deserialize");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
-void set_write_policy(as_policy_write* write_policy, PyObject* py_policy) {
+as_status set_write_policy(as_policy_write* write_policy, PyObject* py_policy) {
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+	as_status status = AEROSPIKE_OK;
+
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
 
-	set_base_policy(&write_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_uint32_property((uint32_t*)&write_policy->key, py_policy, "key");
+	status = set_base_policy(&write_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&write_policy->replica, py_policy, "replica");
+	status = set_optional_uint32_property((uint32_t*)&write_policy->key, py_policy, "key");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&write_policy->commit_level, py_policy, "commit_level");
+	status = set_optional_uint32_property((uint32_t*)&write_policy->replica, py_policy, "replica");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&write_policy->gen, py_policy, "gen");
+	status = set_optional_uint32_property((uint32_t*)&write_policy->commit_level, py_policy, "commit_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&write_policy->exists, py_policy, "exists");
+	status = set_optional_uint32_property((uint32_t*)&write_policy->gen, py_policy, "gen");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&write_policy->compression_threshold, py_policy, "compression_threshold");
+	status = set_optional_uint32_property((uint32_t*)&write_policy->exists, py_policy, "exists");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&write_policy->durable_delete, py_policy, "durable_delete");
+	status = set_optional_uint32_property((uint32_t*)&write_policy->compression_threshold, py_policy, "compression_threshold");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
+	status = set_optional_bool_property(&write_policy->durable_delete, py_policy, "durable_delete");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
-void set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy) {
+as_status set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy) {
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+	as_status status = AEROSPIKE_OK;
+
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
 
-	set_base_policy(&apply_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_uint32_property((uint32_t*)&apply_policy->key, py_policy, "key");
+	status = set_base_policy(&apply_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&apply_policy->replica, py_policy, "replica");
+	status = set_optional_uint32_property((uint32_t*)&apply_policy->key, py_policy, "key");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&apply_policy->gen, py_policy, "gen");
+	status = set_optional_uint32_property((uint32_t*)&apply_policy->replica, py_policy, "replica");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&apply_policy->commit_level, py_policy, "commit_level");
+	status = set_optional_uint32_property((uint32_t*)&apply_policy->gen, py_policy, "gen");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
+	status = set_optional_uint32_property((uint32_t*)&apply_policy->commit_level, py_policy, "commit_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
-void set_remove_policy(as_policy_remove* remove_policy, PyObject* py_policy) {
+as_status set_remove_policy(as_policy_remove* remove_policy, PyObject* py_policy) {
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+	as_status status = AEROSPIKE_OK;
+
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
 
-	set_base_policy(&remove_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_uint32_property((uint32_t*)&remove_policy->key, py_policy, "key");
+	status = set_base_policy(&remove_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&remove_policy->replica, py_policy, "replica");
+	status = set_optional_uint32_property((uint32_t*)&remove_policy->key, py_policy, "key");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&remove_policy->commit_level, py_policy, "commit_level");
+	status = set_optional_uint32_property((uint32_t*)&remove_policy->replica, py_policy, "replica");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&remove_policy->gen, py_policy, "gen");
+	status = set_optional_uint32_property((uint32_t*)&remove_policy->commit_level, py_policy, "commit_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&remove_policy->durable_delete, py_policy, "durable_delete");
+	status = set_optional_uint32_property((uint32_t*)&remove_policy->gen, py_policy, "gen");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
+	status = set_optional_bool_property(&remove_policy->durable_delete, py_policy, "durable_delete");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
-void set_query_policy(as_policy_query* query_policy, PyObject* py_policy) {
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+as_status set_query_policy(as_policy_query* query_policy, PyObject* py_policy) {
+
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
 
-	set_base_policy(&query_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
+
+	return set_base_policy(&query_policy->base, py_policy);
 }
 
-void set_scan_policy(as_policy_scan* scan_policy, PyObject* py_policy) {
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+as_status set_scan_policy(as_policy_scan* scan_policy, PyObject* py_policy) {
+
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
-	set_base_policy(&scan_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
+
+	return set_base_policy(&scan_policy->base, py_policy);
 }
 
-void set_operate_policy(as_policy_operate* operate_policy, PyObject* py_policy) {
+as_status set_operate_policy(as_policy_operate* operate_policy, PyObject* py_policy) {
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+	as_status status = AEROSPIKE_OK;
+
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
 
-	set_base_policy(&operate_policy->base, py_policy);
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_uint32_property((uint32_t*)&operate_policy->key, py_policy, "key");
+	status = set_base_policy(&operate_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&operate_policy->replica, py_policy, "replica");
+	status = set_optional_uint32_property((uint32_t*)&operate_policy->key, py_policy, "key");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&operate_policy->commit_level, py_policy, "commit_level");
+	status = set_optional_uint32_property((uint32_t*)&operate_policy->replica, py_policy, "replica");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&operate_policy->gen, py_policy, "gen");
+	status = set_optional_uint32_property((uint32_t*)&operate_policy->commit_level, py_policy, "commit_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&operate_policy->consistency_level, py_policy, "consistency_level");
+	status = set_optional_uint32_property((uint32_t*)&operate_policy->gen, py_policy, "gen");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
+	status = set_optional_uint32_property((uint32_t*)&operate_policy->consistency_level, py_policy, "consistency_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
-void set_batch_policy(as_policy_batch* batch_policy, PyObject* py_policy) {
+as_status set_batch_policy(as_policy_batch* batch_policy, PyObject* py_policy) {
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
-		return;
+	as_status status = AEROSPIKE_OK;
+	if (!py_policy) {
+		return AEROSPIKE_OK;
 	}
-	set_base_policy(&batch_policy->base, py_policy);
 
-	set_optional_uint32_property((uint32_t*)&batch_policy->consistency_level, py_policy, "consistency_level");
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_bool_property(&batch_policy->concurrent, py_policy, "concurrent");
+	status = set_base_policy(&batch_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&batch_policy->use_batch_direct, py_policy, "use_batch_direct");
+	status = set_optional_uint32_property((uint32_t*)&batch_policy->consistency_level, py_policy, "consistency_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&batch_policy->allow_inline, py_policy, "allow_inline");
+	status = set_optional_bool_property(&batch_policy->concurrent, py_policy, "concurrent");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&batch_policy->send_set_name, py_policy, "send_set_name");
+	status = set_optional_bool_property(&batch_policy->use_batch_direct, py_policy, "use_batch_direct");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_bool_property(&batch_policy->deserialize, py_policy, "deserialize");
+	status = set_optional_bool_property(&batch_policy->allow_inline, py_policy, "allow_inline");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
+	status = set_optional_bool_property(&batch_policy->send_set_name, py_policy, "send_set_name");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&batch_policy->deserialize, py_policy, "deserialize");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
 as_status set_base_policy(as_policy_base* base_policy, PyObject* py_policy) {
 
+	as_status status = AEROSPIKE_OK;
 
-	if (!py_policy || !PyDict_Check(py_policy)) {
+	if (!py_policy) {
 		return AEROSPIKE_OK;
 	}
 
-	set_optional_uint32_property((uint32_t*)&base_policy->total_timeout, py_policy, "total_timeout");
+	if (!PyDict_Check(py_policy)) {
+		return AEROSPIKE_ERR_PARAM;
+	}
 
-	set_optional_uint32_property((uint32_t*)&base_policy->socket_timeout, py_policy, "socket_timeout");
+	status = set_optional_uint32_property((uint32_t*)&base_policy->total_timeout, py_policy, "total_timeout");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&base_policy->max_retries, py_policy, "max_retries");
+	status = set_optional_uint32_property((uint32_t*)&base_policy->socket_timeout, py_policy, "socket_timeout");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
-	set_optional_uint32_property((uint32_t*)&base_policy->sleep_between_retries, py_policy, "sleep_between_retries");
+	status = set_optional_uint32_property((uint32_t*)&base_policy->max_retries, py_policy, "max_retries");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_uint32_property((uint32_t*)&base_policy->sleep_between_retries, py_policy, "sleep_between_retries");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
 
 	return AEROSPIKE_OK;
 }
