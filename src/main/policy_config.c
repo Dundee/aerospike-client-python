@@ -205,6 +205,11 @@ as_status set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy) {
 		return status;
 	}
 
+	status = set_optional_bool_property(&apply_policy->durable_delete, py_policy, "durable_delete");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
 	return AEROSPIKE_OK;
 }
 
@@ -255,6 +260,8 @@ as_status set_remove_policy(as_policy_remove* remove_policy, PyObject* py_policy
 
 as_status set_query_policy(as_policy_query* query_policy, PyObject* py_policy) {
 
+	as_status status = AEROSPIKE_OK;
+
 	if (!py_policy) {
 		return AEROSPIKE_OK;
 	}
@@ -263,11 +270,23 @@ as_status set_query_policy(as_policy_query* query_policy, PyObject* py_policy) {
 		return AEROSPIKE_ERR_PARAM;
 	}
 
-	return set_base_policy(&query_policy->base, py_policy);
+	status = set_base_policy(&query_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&query_policy->deserialize, py_policy, "deserialize");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
 as_status set_scan_policy(as_policy_scan* scan_policy, PyObject* py_policy) {
 
+	as_status status = AEROSPIKE_OK;
+
 	if (!py_policy) {
 		return AEROSPIKE_OK;
 	}
@@ -275,7 +294,22 @@ as_status set_scan_policy(as_policy_scan* scan_policy, PyObject* py_policy) {
 		return AEROSPIKE_ERR_PARAM;
 	}
 
-	return set_base_policy(&scan_policy->base, py_policy);
+	status = set_base_policy(&scan_policy->base, py_policy);
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&scan_policy->durable_delete, py_policy, "durable_delete");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&scan_policy->fail_on_cluster_change, py_policy, "fail_on_cluster_change");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	return AEROSPIKE_OK;
 }
 
 as_status set_operate_policy(as_policy_operate* operate_policy, PyObject* py_policy) {
@@ -316,6 +350,16 @@ as_status set_operate_policy(as_policy_operate* operate_policy, PyObject* py_pol
 	}
 
 	status = set_optional_uint32_property((uint32_t*)&operate_policy->consistency_level, py_policy, "consistency_level");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&operate_policy->durable_delete, py_policy, "durable_delete");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&operate_policy->deserialize, py_policy, "deserialize");
 	if (status != AEROSPIKE_OK) {
 		return status;
 	}

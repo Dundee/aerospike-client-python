@@ -32,7 +32,7 @@ get_string_from_string_like(PyObject* string_like);
 void
 setup_tls_config(as_config* config, PyObject* tls_config)
 {
-	long long_timeout;
+
 	PyObject* config_value = NULL;
 	int truth_value = -1;
 
