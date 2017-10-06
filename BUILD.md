@@ -1,5 +1,7 @@
 # Manually Building the Python Client for Aerospike
 
+First clone this repository to get the necessary files.
+
 ## Dependencies
 
 The Python client for Aerospike works with Python 2.7, 3.4, 3.5, 3.6 running on
@@ -24,6 +26,8 @@ The following are dependencies for:
 sudo yum install openssl-devel
 sudo yum install python26-devel # on CentOS 6 and similar
 sudo yum install python-devel # on CentOS 7
+# Possibly needed
+sudo yum install python-setuptools
 ```
 
 To get `python26-devel` on older distros such as CentOS 5, see [Stack Overflow](http://stackoverflow.com/a/11684053/582436).
