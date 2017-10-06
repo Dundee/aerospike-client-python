@@ -349,6 +349,7 @@ setup(
                 'src/main/geospatial/dumps.c',
                 'src/main/conversions.c',
                 'src/main/policy.c',
+                'src/main/policy_config.c',
                 'src/main/calc_digest.c',
                 'src/main/predicates.c',
                 'src/main/tls_config.c',
