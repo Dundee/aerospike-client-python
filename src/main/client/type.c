@@ -30,11 +30,12 @@
 #include "conversions.h"
 #include "exceptions.h"
 #include "tls_config.h"
+#include "policy_config.h"
 
 enum {INIT_NO_CONFIG_ERR = 1, INIT_CONFIG_TYPE_ERR, INIT_LUA_USER_ERR,
 	  INIT_LUA_SYS_ERR,  INIT_HOST_TYPE_ERR, INIT_EMPTY_HOSTS_ERR,
 	  INIT_INVALID_ADRR_ERR, INIT_SERIALIZE_ERR, INIT_DESERIALIZE_ERR,
-	  INIT_COMPRESSION_ERR} ;
+	  INIT_COMPRESSION_ERR, INIT_POLICY_PARAM_ERR};
 
 /*******************************************************************************
  * PYTHON TYPE METHODS
@@ -733,6 +734,35 @@ static int AerospikeClient_Type_Init(AerospikeClient * self, PyObject * args, Py
 		/*
 		 * Generation policy is removed from constructor.
 		 */
+
+		/*
+		 * Set individual policy groups, and base policies for each
+		 * Set the individual policy groups new in 3.0
+		 * */
+		 PyObject* read_policy = PyDict_GetItemString(py_policies, "read");
+		 set_read_policy(&config.policies.read, read_policy);
+
+		 PyObject* write_policy = PyDict_GetItemString(py_policies, "write");
+		 set_write_policy(&config.policies.write, write_policy);
+
+		 PyObject* apply_policy = PyDict_GetItemString(py_policies, "apply");
+		 set_apply_policy(&config.policies.apply, apply_policy);
+
+		 PyObject* remove_policy = PyDict_GetItemString(py_policies, "remove");
+		 set_remove_policy(&config.policies.remove, remove_policy);
+
+		 PyObject* query_policy = PyDict_GetItemString(py_policies, "query");
+		 set_query_policy(&config.policies.query, query_policy);
+
+		 PyObject* scan_policy = PyDict_GetItemString(py_policies, "scan");
+		 set_scan_policy(&config.policies.scan, scan_policy);
+
+		 PyObject* operate_policy = PyDict_GetItemString(py_policies, "operate");
+		 set_operate_policy(&config.policies.operate, operate_policy);
+
+		 PyObject* batch_policy = PyDict_GetItemString(py_policies, "batch");
+		 set_batch_policy(&config.policies.batch, batch_policy);
+
 	}
 
 	// thread_pool_size
@@ -926,7 +956,8 @@ AerospikeClient * AerospikeClient_New(PyObject * parent, PyObject * args, PyObje
 	return_code = AerospikeClient_Type.tp_init((PyObject *) self, args, kwds);
 
 	switch(return_code) {
-		case 0	: {
+		// 0 Is success
+		case 0: {
 				// Initialize connection flag
 			self->is_conn_16 = false;
 			return self;
@@ -969,6 +1000,10 @@ AerospikeClient * AerospikeClient_New(PyObject * parent, PyObject * args, PyObje
 		}
 		case INIT_COMPRESSION_ERR: {
 			as_error_update(&err, AEROSPIKE_ERR_PARAM, "Compression value must not be negative");
+			break;
+		}
+		case INIT_POLICY_PARAM_ERR: {
+			as_error_update(&err, AEROSPIKE_ERR_PARAM, "Invalid Policy setting value");
 			break;
 		}
 		default:
