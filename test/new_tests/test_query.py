@@ -348,8 +348,8 @@ class TestQuery(TestBaseClass):
         records = []
 
         def callback(input_tuple):
-            _, _, record = input_tuple
-            assert record is None
+            _, _, bins = input_tuple
+            assert len(bins) == 0
         query.foreach(callback, policy, options=options)
         assert len(records) == 1
 
