@@ -349,9 +349,10 @@ class TestQuery(TestBaseClass):
 
         def callback(input_tuple):
             _, _, bins = input_tuple
+            print(bins)
             assert len(bins) == 0
+
         query.foreach(callback, policy, options=options)
-        assert len(records) == 1
 
     def test_query_with_invalid_options_argument_type(self):
         """

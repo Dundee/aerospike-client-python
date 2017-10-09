@@ -548,6 +548,19 @@ Operators for the multi-ops method :py:meth:`~aerospike.Client.operate`.
             "val": [ 123, 456 ]
         }
 
+.. data:: OP_LIST_INCREMENT
+
+    Increment the value of an item at the given index in a list stored in the specified bin
+
+    .. code-block:: python
+
+        {
+            "op": aerospike.OP_LIST_INCREMENT,
+            "bin": "bin_name",
+            "index": 2,
+            "val": 5
+        }
+
 .. data:: OP_LIST_POP
 
     Remove and return the element at a specified index of a bin with :class:`list` type data

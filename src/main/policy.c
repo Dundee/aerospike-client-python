@@ -162,6 +162,7 @@ AerospikeConstants aerospike_constants[] = {
 	{ OP_LIST_GET_RANGE                     ,   "OP_LIST_GET_RANGE"},
 	{ OP_LIST_TRIM                          ,   "OP_LIST_TRIM"},
 	{ OP_LIST_SIZE                          ,   "OP_LIST_SIZE"},
+	{ OP_LIST_INCREMENT                     ,   "OP_LIST_INCREMENT"},
 
 	{ OP_MAP_SET_POLICY                     ,   "OP_MAP_SET_POLICY"},
 	{ OP_MAP_PUT                            ,   "OP_MAP_PUT"},

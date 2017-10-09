@@ -50,7 +50,8 @@ enum Aerospike_list_operations {
 	OP_LIST_GET,
 	OP_LIST_GET_RANGE,
 	OP_LIST_TRIM,
-	OP_LIST_SIZE
+	OP_LIST_SIZE,
+	OP_LIST_INCREMENT
 };
 
 enum Aerospike_map_operations {

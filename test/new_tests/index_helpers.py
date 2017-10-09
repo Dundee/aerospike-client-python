@@ -17,7 +17,7 @@ def index_found_in_info_res(res, index_name):
 def ensure_dropped_index(client, namespace, index_name):
     try:
         client.index_remove(namespace, index_name)
-    except e.IndexNotFound:
+    except (e.IndexNotFound, e.InvalidRequest):
         pass
     retries = 0
     while retries < 10:
