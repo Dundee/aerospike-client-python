@@ -2613,12 +2613,38 @@ Write Policies
 
 .. object:: policy
 
-    A :class:`dict` of optional write policies which are applicable to :meth:`~Client.put`.
+    A :class:`dict` of optional write policies which are applicable to :meth:`~Client.put`, :meth:`~Client.query_apply`. :meth:`~Client.remove_bin`.
 
     .. hlist::
         :columns: 1
 
-        * **total_timeout** write timeout in milliseconds
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``2``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep. Default: ``500``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``0``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``1000``
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **exists** one of the ``aerospike.POLICY_EXISTS_*`` values such as :data:`aerospike.POLICY_EXISTS_CREATE`
         * **gen** one of the ``aerospike.POLICY_GEN_*`` values such as :data:`aerospike.POLICY_GEN_IGNORE`
@@ -2633,12 +2659,44 @@ Read Policies
 
 .. object:: policy
 
-    A :class:`dict` of optional read policies which are applicable to :meth:`~Client.get`.
+    A :class:`dict` of optional read policies which are applicable to :meth:`~Client.get`, :meth:`~Client.exists`, :meth:`~Client.select`.
 
     .. hlist::
         :columns: 1
 
-        * **total_timeout** read timeout in milliseconds
+
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``2``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep. Default: ``0``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``0``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``1000``
+        * **deserialize**
+            | :class:`bool` Should raw bytes representing a list or map be deserialized to a list or dictionary.
+            | Set to `False` for backup programs that just need access to raw bytes.
+            | Default: ``True``
+
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **consistency_level** one of the ``aerospike.POLICY_CONSISTENCY_*`` values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
         * **replica** one of the ``aerospike.POLICY_REPLICA_*`` values such as :data:`aerospike.POLICY_REPLICA_MASTER`
@@ -2650,16 +2708,43 @@ Operate Policies
 
 .. object:: policy
 
-    A :class:`dict` of optional operate policies which are applicable to :meth:`~Client.append`, :meth:`~Client.prepend`, :meth:`~Client.increment`, :meth:`~Client.operate`, and atomic list operations.
+    A :class:`dict` of optional operate policies which are applicable to :meth:`~Client.append`, :meth:`~Client.prepend`, :meth:`~Client.increment`, :meth:`~Client.operate`, and atomic list and map operations.
 
     .. hlist::
         :columns: 1
 
-        * **total_timeout** timeout for the operation in milliseconds
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``2``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep.
+            |
+            | Default: ``500``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``0``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``1000``
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **gen** one of the ``aerospike.POLICY_GEN_*`` values such as :data:`aerospike.POLICY_GEN_IGNORE`
         * **replica** one of the ``aerospike.POLICY_REPLICA_*`` values such as :data:`aerospike.POLICY_REPLICA_MASTER`
-        * **max_retries** integer, number of times to attempt to retry. Default `2`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **consistency_level** one of the ``aerospike.POLICY_CONSISTENCY_*`` values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
         * **durable_delete** boolean value: True to perform durable delete (requires Enterprise server version >= 3.10)
@@ -2671,12 +2756,38 @@ Apply Policies
 
 .. object:: policy
 
-    A :class:`dict` of optional apply policies which are applicable to :meth:`~Client.apply`, and :class:`~aerospike.LList` methods.
+    A :class:`dict` of optional apply policies which are applicable to :meth:`~Client.apply`.
 
     .. hlist::
         :columns: 1
 
-        * **total_timeout** timeout for the apply operation in milliseconds
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``2``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep. Default: ``500``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``0``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``1000``
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **durable_delete** boolean value: True to perform durable delete (requires Enterprise server version >= 3.10)
@@ -2693,7 +2804,33 @@ Remove Policies
     .. hlist::
         :columns: 1
 
-        * **total_timeout** write timeout in milliseconds
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``2``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep. Default: ``500``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``0``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``1000``
         * **key** one of the ``aerospike.POLICY_KEY_*`` values such as :data:`aerospike.POLICY_KEY_DIGEST`
         * **commit_level** one of the ``aerospike.POLICY_COMMIT_LEVEL_*`` values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
         * **gen** one of the ``aerospike.POLICY_GEN_*`` values such as :data:`aerospike.POLICY_GEN_IGNORE`
@@ -2714,9 +2851,35 @@ Batch Policies
     .. hlist::
         :columns: 1
 
-        * **total_timeout** read timeout in milliseconds
-        * **max_retries** integer, number of times to retry the operation if it fails due to netowrk error. Default `2`
-        * **sleep_between_retries** Milliseconds to sleep between retries. Default: `0` (do not sleep)
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``2``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep.
+            |
+            | Default: ``0``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``0``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``1000``
         * **consistency_level** one of the ``aerospike.POLICY_CONSISTENCY_*`` values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
         * **concurrent** :class:`bool` Determine if batch commands to each server are run in parallel threads. Default `False`
         * **allow_inline** :class:`bool` . Allow batch to be processed immediately in the server's receiving thread when the server deems it to be appropriate.  If `False`, the batch will always be processed in separate transaction threads.  This field is only relevant for the new batch index protocol. Default `True`.

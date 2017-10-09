@@ -61,6 +61,14 @@ in an in-memory primary index.
                 * **consistency_level** default consistency level policy, with values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
                 * **replica** default replica policy, with values such as :data:`aerospike.POLICY_REPLICA_MASTER`
                 * **commit_level** default commit level policy, with values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
+                * **read** A dictionary containing read policies. See :ref:`aerospike_read_policies` for available policies
+                * **write** A dictionary containing write policies. See :ref:`aerospike_write_policies` for available policies
+                * **apply** A dictionary containing apply policies. See :ref:`aerospike_apply_policies` for available policies
+                * **operate** A dictionary containing operate policies. See :ref:`aerospike_operate_policies` for available policies
+                * **remove** A dictionary containing remove policies. See :ref:`aerospike_remove_policies` for available policies
+                * **query** A dictionary containing query policies. See :ref:`aerospike_query_policies` for available policies
+                * **scan** A dictionary containing scan policies. See :ref:`aerospike_scan_policies` for available policies
+                * **batch** A dictionary containing batch policies. See :ref:`aerospike_batch_policies` for available policies
             * **shm** a :class:`dict` with optional shared-memory cluster tending parameters. Shared-memory cluster tending is on if the :class:`dict` is provided. If multiple clients are instantiated talking to the same cluster the *shm* cluster-tending should be used.
                 * **max_nodes** maximum number of nodes allowed. Pad so new nodes can be added without configuration changes (default: 16)
                 * **max_namespaces** similarly pad (default: 8)

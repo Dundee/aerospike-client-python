@@ -335,9 +335,27 @@ class TestQuery(TestBaseClass):
         query.foreach(callback, policy)
         assert len(records) == 1
 
-    def test_query_with_extra_argument(self):
+    @pytest.mark.xfail(reason="Only pass with server version >= 3.15")
+    def test_query_with_no_bins_option(self):
         """
-            Invoke query() with extra argument
+            Invoke query() with policy
+        """
+        policy = {'total_timeout': 1000}
+        options = {'nobins': True}
+        query = self.as_connection.query('test', 'demo')
+        query.select('name', 'test_age')
+        query.where(p.equals('test_age', 1))
+        records = []
+
+        def callback(input_tuple):
+            _, _, record = input_tuple
+            assert record is None
+        query.foreach(callback, policy, options=options)
+        assert len(records) == 1
+
+    def test_query_with_invalid_options_argument_type(self):
+        """
+            Invoke query() with incorrect options type, should be a dictionary
         """
         policy = {'timeout': 1000}
         query = self.as_connection.query('test', 'demo')
@@ -348,11 +366,23 @@ class TestQuery(TestBaseClass):
             _, metadata, _ = input_tuple
             assert metadata['gen'] is None
 
-        with pytest.raises(TypeError) as typeError:
+        with pytest.raises(e.ParamError):
             query.foreach(callback, policy, "")
 
-        assert "foreach() takes at most 2 arguments (3 given)" in str(
-            typeError.value)
+    def test_query_with_invalid_nobins_value(self):
+        """
+            Invoke query() with options['nobins'] type
+        """
+        policy = {'total_timeout': 1000}
+        query = self.as_connection.query('test', 'demo')
+        query.select('name', 'test_age')
+        query.where(p.equals('test_age', 1))
+
+        def callback(input_tuple):
+            pass
+
+        with pytest.raises(e.ParamError):
+            query.foreach(callback, policy, {'nobins': 'False'})
 
     def test_query_with_put_in_callback(self):
         """
@@ -426,6 +456,37 @@ class TestQuery(TestBaseClass):
 
         records = query.results()
         assert len(records) == 1
+
+    def test_query_with_results_nobins_options(self):
+        """
+            Invoke query() with correct arguments
+        """
+        query = self.as_connection.query('test', 'demo')
+        query.select('name', 'test_age')
+        query.where(p.equals('test_age', 1))
+
+        records = query.results(options={'nobins': True})
+        assert len(records) == 1
+
+    def test_query_with_results_invalid_options_type(self):
+        """
+            Invoke query() with correct arguments
+        """
+        query = self.as_connection.query('test', 'demo')
+        query.select('name', 'test_age')
+        query.where(p.equals('test_age', 1))
+        with pytest.raises(e.ParamError):
+            records = query.results(options=False)
+
+    def test_query_with_results_invalid_nobins_options(self):
+        """
+            Invoke query() with correct arguments
+        """
+        query = self.as_connection.query('test', 'demo')
+        query.select('name', 'test_age')
+        query.where(p.equals('test_age', 1))
+        with pytest.raises(e.ParamError):
+            records = query.results(options={'nobins': "false"})
 
     def test_query_with_unicode_binnames_in_select_and_where(self):
         """
