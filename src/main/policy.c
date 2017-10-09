@@ -298,6 +298,26 @@ void set_scan_options(as_error *err, as_scan* scan_p, PyObject * py_options)
 	}
 }
 
+as_status set_query_options(as_error* err, PyObject* query_options, as_query* query) {
+	PyObject* no_bins_val = NULL;
+	if (!query_options || query_options == Py_None) {
+		return AEROSPIKE_OK;
+	}
+
+	if (!PyDict_Check(query_options)) {
+		return as_error_update(err, AEROSPIKE_ERR_PARAM, "query options must be a dictionary");
+	}
+
+	no_bins_val = PyDict_GetItemString(query_options, "nobins");
+	if (no_bins_val) {
+		if (!PyBool_Check(no_bins_val)) {
+			return as_error_update(err, AEROSPIKE_ERR_PARAM, "nobins value must be a bool");
+		}
+		query->no_bins = PyObject_IsTrue(no_bins_val);
+	}
+	return AEROSPIKE_OK;
+
+}
 /**
  * Declares policy constants.
  */
@@ -371,7 +391,12 @@ as_status pyobject_to_policy_apply(as_error * err, PyObject * py_policy,
 
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
+
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(durable_delete, bool);
 
@@ -429,7 +454,12 @@ as_status pyobject_to_policy_query(as_error * err, PyObject * py_policy,
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
 
+
+	POLICY_SET_FIELD(deserialize, bool);
 	// Update the policy
 	POLICY_UPDATE();
 
@@ -455,7 +485,12 @@ as_status pyobject_to_policy_read(as_error * err, PyObject * py_policy,
 
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
+
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(consistency_level, as_policy_consistency_level);
 	POLICY_SET_FIELD(replica, as_policy_replica);
@@ -485,9 +520,14 @@ as_status pyobject_to_policy_remove(as_error * err, PyObject * py_policy,
 
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
+
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
-	POLICY_SET_FIELD(generation, uint16_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
 	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
+	POLICY_SET_FIELD(generation, uint16_t);
+
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(gen, as_policy_gen);
 	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
@@ -519,8 +559,12 @@ as_status pyobject_to_policy_scan(as_error * err, PyObject * py_policy,
 	// Set policy fields
 	// server side socket_timeout
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
-	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
+
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
 	POLICY_SET_FIELD(fail_on_cluster_change, bool);
 	POLICY_SET_FIELD(durable_delete, bool);
 
@@ -549,8 +593,13 @@ as_status pyobject_to_policy_write(as_error * err, PyObject * py_policy,
 
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
+
+	// Base policy_fields
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
 	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(gen, as_policy_gen);
 	POLICY_SET_FIELD(exists, as_policy_exists);
@@ -582,8 +631,12 @@ as_status pyobject_to_policy_operate(as_error * err, PyObject * py_policy,
 
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
+
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
 	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
+	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(gen, as_policy_gen);
 	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
@@ -616,9 +669,12 @@ as_status pyobject_to_policy_batch(as_error * err, PyObject * py_policy,
 
 	// Set policy fields
 	POLICY_SET_TOTAL_TIMEOUT_FROM_TIMEOUT();
+
 	POLICY_SET_BASE_FIELD(total_timeout, uint32_t);
+	POLICY_SET_BASE_FIELD(socket_timeout, uint32_t);
 	POLICY_SET_BASE_FIELD(max_retries, uint32_t);
 	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
+
 	POLICY_SET_FIELD(consistency_level, as_policy_consistency_level);
 	POLICY_SET_FIELD(concurrent, bool);
 	POLICY_SET_FIELD(use_batch_direct, bool);

@@ -250,6 +250,34 @@ Query Policies
     .. hlist::
         :columns: 1
 
-        * **total_timeout** maximum time in milliseconds to wait for the operation to complete. Default ``0`` means *do not timeout*.
-
-
+        * **max_retries**
+            | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
+            |
+            | If max_retries is exceeded, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``.
+            |
+            | **WARNING**: Database writes that are not idempotent (such as "add") should not be retried because the write operation may be performed multiple times
+            | if the client timed out previous transaction attempts. It's important to use a distinct write policy for non-idempotent writes which sets max_retries = `0`;
+            |
+            | Default: ``0``
+        * **sleep_between_retries**
+            | An :class:`int`. Milliseconds to sleep between retries. Enter zero to skip sleep. Default: ``0``
+        * **socket_timeout**
+            | An :class:`int`. Socket idle timeout in milliseconds when processing a database command.
+            |
+            | If socket_timeout is not zero and the socket has been idle for at least socket_timeout, both max_retries and total_timeout are checked. If max_retries and total_timeout are not exceeded, the transaction is retried.
+            |
+            | If both ``socket_timeout`` and ``total_timeout`` are non-zero and ``socket_timeout`` > ``total_timeout``, then ``socket_timeout`` will be set to ``total_timeout``. If ``socket_timeout`` is zero, there will be no socket idle limit.
+            |
+            | Default: ``10000``.
+        * **total_timeout**
+            | An :class:`int`. Total transaction timeout in milliseconds.
+            |
+            | The total_timeout is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction.
+            |
+            | If ``total_timeout`` is not zero and ``total_timeout`` is reached before the transaction completes, the transaction will return error ``AEROSPIKE_ERR_TIMEOUT``. If ``total_timeout`` is zero, there will be no total time limit.
+            |
+            | Default: ``0``
+        * **deserialize**
+            | :class:`bool` Should raw bytes representing a list or map be deserialized to a list or dictionary.
+            | Set to `False` for backup programs that just need access to raw bytes.
+            | Default: ``True``

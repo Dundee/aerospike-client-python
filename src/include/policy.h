@@ -16,6 +16,7 @@
 
 #include <Python.h>
 #include <aerospike/as_error.h>
+#include <aerospike/as_query.h>
 #include <aerospike/as_policy.h>
 #include <aerospike/as_policy.h>
 #include <aerospike/as_map_operations.h>
@@ -148,3 +149,6 @@ as_status pyobject_to_map_policy(as_error * err, PyObject * py_policy,
 as_status declare_policy_constants(PyObject *aerospike);
 
 void set_scan_options(as_error *err, as_scan* scan_p, PyObject * py_options);
+
+as_status set_query_options(as_error* err, PyObject* query_options, as_query* query);
+
