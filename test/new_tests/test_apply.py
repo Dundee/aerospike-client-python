@@ -190,7 +190,7 @@ class TestApply(TestBaseClass):
         """
             Invoke apply() with policy
         """
-        policy = {'timeout': 1000}
+        policy = {'total_timeout': 1000}
         key = ('test', 'demo', 1)
         retval = self.as_connection.apply(
             key, 'sample', 'list_append', ['name', 'car'], policy)
@@ -354,7 +354,7 @@ class TestApply(TestBaseClass):
         """
             Invoke apply() with extra argument.
         """
-        policy = {'timeout': 1000}
+        policy = {'total_timeout': 1000}
         key = ('test', 'demo', 1)
         with pytest.raises(TypeError) as typeError:
             self.as_connection.apply(key, 'sample', 'list_append',

@@ -57,7 +57,7 @@ class TestConnect(object):
         """
 
         config = self.connection_config.copy()
-        config['policies'] = {'timeout': 10000}
+        config['policies'] = {'read': {'total_timeout': 10000}}
 
         with open_as_connection(config) as client:
             assert client is not None

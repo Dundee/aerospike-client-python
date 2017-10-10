@@ -54,7 +54,7 @@ class TestGetMany():
         '''
         Proper call to the method
         '''
-        records = self.as_connection.get_many(self.keys, {'timeout': 30})
+        records = self.as_connection.get_many(self.keys, {'total_timeout': 30})
 
         assert isinstance(records, list)
         assert len(records) == 6
@@ -171,7 +171,7 @@ class TestGetMany():
     def test_pos_get_many_with_use_batch_direct(self):
 
         hostlist, user, password = TestBaseClass.get_hosts()
-        config = {'policies': {'use_batch_direct': True}}
+        config = {'policies': {'batch': {'use_batch_direct': True}}}
         client_batch_direct = TestBaseClass.get_new_connection(add_config=config)
 
         records = client_batch_direct.get_many(self.keys)
@@ -216,52 +216,33 @@ class TestGetMany():
         Invoke get_many() without primary key
         """
         key = ('test', 'set')
-        try:
+        with pytest.raises(e.ParamError):
             key, _, _ = self.as_connection.get(key)
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == 'key tuple must be (Namespace, Set, Key) or (Namespace, Set, None, Digest)'
 
     def test_neg_get_many_with_proper_parameters_without_connection(self):
         config = {'hosts': [('127.0.0.1', 3000)]}
         client1 = aerospike.client(config)
-        try:
-            client1.get_many(self.keys, {'timeout': 20})
-
-        except e.ClusterError as exception:
-            assert exception.code == 11
+        with pytest.raises(e.ClusterError):
+            client1.get_many(self.keys, {'total_timeout': 20})
 
     def test_neg_prepend_Invalid_Key_without_set_name(self):
         """
         Invoke prepend() without set name
         """
         key = ('test', 1)
-        try:
+        with pytest.raises(e.ParamError):
             key, _, _ = self.as_connection.get(key)
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == 'key tuple must be (Namespace, Set, Key) or (Namespace, Set, None, Digest)'
 
     def test_neg_get_many_with_invalid_key(self):
 
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.get_many("key")
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == "Keys should be specified as a list or tuple."
 
     def test_neg_get_many_with_invalid_timeout(self):
 
-        policies = {'timeout': 0.2}
-        try:
+        policies = {'total_timeout': 0.2}
+        with pytest.raises(e.ParamError):
             self.as_connection.get_many(self.keys, policies)
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == "timeout is invalid"
 
     def test_neg_get_many_without_any_parameter(self):
 
@@ -273,12 +254,8 @@ class TestGetMany():
 
     def test_neg_get_many_with_none_keys(self):
 
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.get_many(None, {})
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == "Keys should be specified as a list or tuple."
 
     def test_neg_prepend_Invalid_Key_Invalid_ns(self):
         """

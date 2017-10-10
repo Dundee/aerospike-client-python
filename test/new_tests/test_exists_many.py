@@ -43,7 +43,7 @@ class TestExistsMany():
             record = {'name': 'name%s' % (str(i)), 'age': i}
             put_data(self.as_connection, key, record)
             self.keys.append(key)
-        records = self.as_connection.exists_many(self.keys, {'timeout': 1200})
+        records = self.as_connection.exists_many(self.keys, {'total_timeout': 1200})
 
         assert isinstance(records, list)
         assert len(records) == rec_length
@@ -167,7 +167,7 @@ class TestExistsMany():
         key = ('test', 'demo', 20)
         rec = {"name": "John"}
         meta = {'gen': 3, 'ttl': 1}
-        policy = {'timeout': 1000}
+        policy = {'total_timeout': 1000}
         put_data(self.as_connection, key, rec, meta, policy)
         keys.append(key)
         time.sleep(2)
@@ -263,21 +263,13 @@ class TestExistsMany():
 
     def test_neg_exists_many_with_none_keys(self):
 
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.exists_many(None, {})
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == "Keys should be specified as a list or tuple."
 
     def test_neg_exists_many_with_invalid_key(self):
 
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.exists_many("key")
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == "Keys should be specified as a list or tuple."
 
     def test_neg_exists_many_with_invalid_timeout(self, put_data):
         self.keys = []
@@ -287,13 +279,9 @@ class TestExistsMany():
             record = {'name': 'name%s' % (str(i)), 'age': i}
             put_data(self.as_connection, key, record)
             self.keys.append(key)
-        policies = {'timeout': 0.2}
-        try:
+        policies = {'total_timeout': 0.2}
+        with pytest.raises(e.ParamError):
             self.as_connection.exists_many(self.keys, policies)
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == "timeout is invalid"
 
     def test_neg_exists_many_with_proper_parameters_without_connection(
             self, put_data):
@@ -309,7 +297,7 @@ class TestExistsMany():
         client1 = aerospike.client(config)
 
         try:
-            client1.exists_many(self.keys, {'timeout': 20})
+            client1.exists_many(self.keys, {'total_timeout': 20})
 
         except e.ClusterError as exception:
             assert exception.code == 11
