@@ -672,50 +672,55 @@ as_status pyobject_to_record(AerospikeClient * self, as_error * err, PyObject * 
 			}
 		}
 
-		if (py_meta && PyDict_Check(py_meta)) {
-			PyObject * py_gen = PyDict_GetItemString(py_meta, "gen");
-			PyObject * py_ttl = PyDict_GetItemString(py_meta, "ttl");
+		if (py_meta  && py_meta != Py_None) {
+			if (!PyDict_Check(py_meta)) {
+				as_error_update(err, AEROSPIKE_ERR_PARAM, "meta must be a dictionary");
+			} else {
+				PyObject * py_gen = PyDict_GetItemString(py_meta, "gen");
+				PyObject * py_ttl = PyDict_GetItemString(py_meta, "ttl");
 
-			if (py_ttl) {
-				if (PyInt_Check(py_ttl)) {
-					rec->ttl = (uint32_t) PyInt_AsLong(py_ttl);
-					if (rec->ttl == (uint32_t)-1 && PyErr_Occurred()) {
-						if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-							as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+				if (py_ttl) {
+					if (PyInt_Check(py_ttl)) {
+						rec->ttl = (uint32_t) PyInt_AsLong(py_ttl);
+						if (rec->ttl == (uint32_t)-1 && PyErr_Occurred()) {
+							if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+								as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+							}
 						}
-					}
-				} else if (PyLong_Check(py_ttl)) {
-					rec->ttl = (uint32_t) PyLong_AsLongLong(py_ttl);
-					if (rec->ttl == (uint32_t)-1 && PyErr_Occurred()) {
-						if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-							as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+					} else if (PyLong_Check(py_ttl)) {
+						rec->ttl = (uint32_t) PyLong_AsLongLong(py_ttl);
+						if (rec->ttl == (uint32_t)-1 && PyErr_Occurred()) {
+							if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+								as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+							}
 						}
+					} else {
+						as_error_update(err, AEROSPIKE_ERR_PARAM, "TTL should be an int or long");
 					}
-				} else {
-					as_error_update(err, AEROSPIKE_ERR_PARAM, "TTL should be an int or long");
 				}
-			}
 
-			if (py_gen) {
-				if (PyInt_Check(py_gen)) {
-					rec->gen = (uint16_t) PyInt_AsLong(py_gen);
-					if (rec->gen == (uint16_t)-1 && PyErr_Occurred()) {
-						if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-							as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+				if (py_gen) {
+					if (PyInt_Check(py_gen)) {
+						rec->gen = (uint16_t) PyInt_AsLong(py_gen);
+						if (rec->gen == (uint16_t)-1 && PyErr_Occurred()) {
+							if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+								as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+							}
 						}
-					}
-				} else if (PyLong_Check(py_gen)) {
-					rec->gen = (uint16_t) PyLong_AsLongLong(py_gen);
-					if (rec->gen == (uint16_t)-1 && PyErr_Occurred()) {
-						if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
-							as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+					} else if (PyLong_Check(py_gen)) {
+						rec->gen = (uint16_t) PyLong_AsLongLong(py_gen);
+						if (rec->gen == (uint16_t)-1 && PyErr_Occurred()) {
+							if (PyErr_ExceptionMatches(PyExc_OverflowError)) {
+								as_error_update(err, AEROSPIKE_ERR_PARAM, "integer value exceeds sys.maxsize");
+							}
 						}
+					} else {
+						as_error_update(err, AEROSPIKE_ERR_PARAM, "Generation should be an int or long");
 					}
-				} else {
-					as_error_update(err, AEROSPIKE_ERR_PARAM, "Generation should be an int or long");
 				}
 			}
 		}
+
 
 		if (err->code != AEROSPIKE_OK) {
 			as_record_destroy(rec);

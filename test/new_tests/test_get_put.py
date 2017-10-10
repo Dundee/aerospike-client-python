@@ -147,12 +147,8 @@ class TestGetPut():
         rec = {'name': 'john'}
 
         policy = {'key': aerospike.POLICY_KEY_DIGEST}
-        try:
+        with pytest.raises(e.ParamError):
             put_data(self.as_connection, key, rec, policy)
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == """key tuple must be (Namespace, Set, Key) or (Namespace, Set, None, Digest)"""
 
     def test_neg_get_with_key_digest(self):
         """
@@ -173,22 +169,16 @@ class TestGetPut():
         """
             Invoke get() with None namespace/key in key tuple.
         """
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.get(key)
-
-        except e.ParamError as exception:
-            assert exception.code == ex_code
-            assert exception.msg == ex_msg
 
     def test_neg_get_with_invalid_record(self):
         """
-            Invoke get() with None namespace/key in key tuple.
+            Get a record which does not exist
         """
-        key = ('test', 'demo', '', '')
-        try:
+        key = ('test', 'demo', 'A PRIMARY KEY WHICH DOES NOT EXIST')
+        with pytest.raises(e.RecordNotFound):
             self.as_connection.get(key)
-        except e.RecordNotFound as exception:
-            assert exception.code == 2
 
     def test_neg_get_with_non_existent_namespace(self):
         """
@@ -223,11 +213,8 @@ class TestGetPut():
         config = {'hosts': [('127.0.0.1', 3000)]}
         client1 = aerospike.client(config)
 
-        try:
+        with pytest.raises(e.ClusterError):
             key, _, _ = client1.get(key)
-
-        except e.ClusterError as exception:
-            assert exception.code == 11
 
     # Put Tests
     def test_pos_put_with_policy_exists_create_or_replace(self):
@@ -240,7 +227,7 @@ class TestGetPut():
         rec = {"name": "Smith"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'exists': aerospike.POLICY_EXISTS_CREATE_OR_REPLACE,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
@@ -254,7 +241,7 @@ class TestGetPut():
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'exists': aerospike.POLICY_EXISTS_CREATE_OR_REPLACE,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
@@ -275,7 +262,7 @@ class TestGetPut():
         rec = {"name": "Smith"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'exists': aerospike.POLICY_EXISTS_IGNORE,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
@@ -297,7 +284,7 @@ class TestGetPut():
         rec = {"name": "Smith"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'exists': aerospike.POLICY_EXISTS_IGNORE,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
@@ -313,7 +300,7 @@ class TestGetPut():
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'exists': aerospike.POLICY_EXISTS_IGNORE,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
@@ -334,7 +321,7 @@ class TestGetPut():
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
             'key': aerospike.POLICY_KEY_SEND,
@@ -347,7 +334,7 @@ class TestGetPut():
 
         rec = {"name": "Smith"}
         meta = {'gen': 2, 'ttl': 25000}
-        policy = {'timeout': 1000, 'exists': aerospike.POLICY_EXISTS_REPLACE}
+        policy = {'total_timeout': 1000, 'exists': aerospike.POLICY_EXISTS_REPLACE}
         assert 0 == self.as_connection.put(key, rec, meta, policy)
 
         (key, meta, bins) = self.as_connection.get(key)
@@ -364,7 +351,7 @@ class TestGetPut():
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
             'key': aerospike.POLICY_KEY_SEND,
@@ -377,7 +364,7 @@ class TestGetPut():
 
         rec = {"name": "Smith"}
         meta = {'gen': 2, 'ttl': 25000}
-        policy = {'timeout': 1000, 'exists': aerospike.POLICY_EXISTS_UPDATE}
+        policy = {'total_timeout': 1000, 'exists': aerospike.POLICY_EXISTS_UPDATE}
         assert 0 == self.as_connection.put(key, rec, meta, policy)
         (key, meta, bins) = self.as_connection.get(key)
 
@@ -392,7 +379,7 @@ class TestGetPut():
 
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
-        policy = {'timeout': 1000}
+        policy = {}
         assert 0 == self.as_connection.put(key, rec, meta, policy)
 
         (key, meta, bins) = self.as_connection.get(key)
@@ -401,7 +388,7 @@ class TestGetPut():
         gen = meta['gen']
         assert gen == 1
         rec = {"name": "Smith"}
-        policy = {'timeout': 1000, 'gen': aerospike.POLICY_GEN_GT}
+        policy = {'gen': aerospike.POLICY_GEN_GT}
         meta = {'gen': gen + 5}
 
         self.as_connection.put(key, rec, meta, policy)
@@ -418,7 +405,7 @@ class TestGetPut():
 
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
-        policy = {'timeout': 1000}
+        policy = {}
         assert 0 == self.as_connection.put(key, rec, meta, policy)
 
         (key, meta, bins) = self.as_connection.get(key)
@@ -427,7 +414,7 @@ class TestGetPut():
 
         gen = meta['gen']
         rec = {"name": "Smith"}
-        policy = {'timeout': 1000, 'gen': aerospike.POLICY_GEN_IGNORE}
+        policy = {'gen': aerospike.POLICY_GEN_IGNORE}
         meta = {'gen': gen}
 
         assert 0 == self.as_connection.put(key, rec, meta, policy)
@@ -517,12 +504,8 @@ class TestGetPut():
             Invoke put() with invalid data
         """
 
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.put(key, record)
-
-        except e.ParamError as exception:
-            assert exception.code == ex_code
-            assert exception.msg == ex_msg
 
     @pytest.mark.parametrize("key, ex_code, ex_msg, record", [
         (("test", "demo", None),
@@ -533,12 +516,8 @@ class TestGetPut():
             Invoke put() with invalid data
         """
 
-        try:
+        with pytest.raises(e.ParamError):
             self.as_connection.put(key, record)
-
-        except e.ParamError as exception:
-            assert exception.code == ex_code
-            assert exception.msg == ex_msg
 
     @pytest.mark.parametrize("key, record, exception_code", [
         # Non-existing NS & Set
@@ -563,22 +542,18 @@ class TestGetPut():
 
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
-        policy = {'timeout': 1000}
+        policy = {}
         assert 0 == self.as_connection.put(key, rec, meta, policy)
 
         (key, meta, bins) = self.as_connection.get(key)
 
         assert {"name": "John"} == bins
         rec = {"name": "Smith"}
-        policy = {'timeout': 1000, 'gen': aerospike.POLICY_GEN_EQ}
+        policy = {'gen': aerospike.POLICY_GEN_EQ}
         meta = {'gen': 10}
 
-        try:
+        with pytest.raises(e.RecordGenerationError):
             self.as_connection.put(key, rec, meta, policy)
-
-        except e.RecordGenerationError as exception:
-            assert exception.code == 3
-            assert exception.msg == 'AEROSPIKE_ERR_RECORD_GENERATION'
 
         (key, meta, bins) = self.as_connection.get(key)
         assert {"name": "John"} == bins
@@ -603,12 +578,8 @@ class TestGetPut():
         policy = {'timeout': 1000, 'gen': aerospike.POLICY_GEN_EQ}
         meta = {'gen': 4}
 
-        try:
+        with pytest.raises(e.RecordGenerationError):
             self.as_connection.put(key, rec, meta, policy)
-
-        except e.RecordGenerationError as exception:
-            assert exception.code == 3
-            assert exception.msg == 'AEROSPIKE_ERR_RECORD_GENERATION'
 
         (key, meta, bins) = self.as_connection.get(key)
         assert {"name": "John"} == bins
@@ -624,7 +595,7 @@ class TestGetPut():
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
+            'total_timeout': 1000,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
             'key': aerospike.POLICY_KEY_SEND,
@@ -639,13 +610,8 @@ class TestGetPut():
         policy = {'timeout': 1000, 'exists': aerospike.POLICY_EXISTS_CREATE}
         meta = {'gen': 2}
 
-        try:
+        with pytest.raises(e.RecordExistsError):
             self.as_connection.put(key, rec, meta, policy)
-
-        except e.RecordExistsError as exception:
-            assert exception.code == 5
-            assert exception.msg == 'AEROSPIKE_ERR_RECORD_EXISTS'
-            assert exception.bin == {'name': 'Smith'}
 
         (key, meta, bins) = self.as_connection.get(key)
         assert {"name": "John"} == bins
@@ -667,12 +633,8 @@ class TestGetPut():
             'retry': aerospike.POLICY_RETRY_ONCE,
             'key': aerospike.POLICY_KEY_SEND
         }
-        try:
+        with pytest.raises(e.RecordNotFound):
             assert 0 == self.as_connection.put(key, rec, meta, policy)
-
-        except e.RecordNotFound as exception:
-            assert exception.code == 2
-            assert exception.msg == 'AEROSPIKE_ERR_RECORD_NOT_FOUND'
 
     def test_neg_put_with_policy_replace(self):
         """
@@ -684,11 +646,8 @@ class TestGetPut():
         meta = {'gen': 2, 'ttl': 25000}
         policy = {'timeout': 1000, 'exists': aerospike.POLICY_EXISTS_REPLACE}
 
-        try:
+        with pytest.raises(e.RecordNotFound):
             self.as_connection.put(key, rec, meta, policy)
-        except e.RecordNotFound as exception:
-            assert exception.code == 2
-            assert exception.msg == 'AEROSPIKE_ERR_RECORD_NOT_FOUND'
 
     def test_neg_put_with_policy_exists_update_negative(self):
         """
@@ -699,7 +658,6 @@ class TestGetPut():
         rec = {"name": "John"}
         meta = {'gen': 2, 'ttl': 25000}
         policy = {
-            'timeout': 1000,
             'exists': aerospike.POLICY_EXISTS_UPDATE,
             'gen': aerospike.POLICY_GEN_IGNORE,
             'retry': aerospike.POLICY_RETRY_ONCE,
@@ -760,22 +718,22 @@ class TestGetPut():
 
     @pytest.mark.parametrize("key, record, meta, policy, ex_code, ex_msg", [
         (('test', 'demo', 1), {'name': 'john'},
-            {'gen': "wrong", 'ttl': 25000}, {'timeout': 1000},  # Gen as string
+            {'gen': "wrong", 'ttl': 25000}, {'total_timeout': 1000},  # Gen as string
             -2, "Generation should be an int or long"),
         (('test', 'demo', 1), {'name': 'john'},
-            {'gen': 3, 'ttl': "25000"}, {'timeout': 1000},      # ttl as string
+            {'gen': 3, 'ttl': "25000"}, {'total_timeout': 1000},      # ttl as string
             -2, "TTL should be an int or long"),
         (('test', 'demo', 1), {'name': 'john'},
-            {'gen': 3, 'ttl': 25000}, {'timeout': "1000"},      # Timeout as string
+            {'gen': 3, 'ttl': 25000}, {'total_timeout': "1000"},      # Timeout as string
             -2, "timeout is invalid"),
         (('test', 'demo', 1), {'name': 'john'},  # Policy as string
             {'gen': 3, 'ttl': 25000}, "Policy",
             -2, "policy must be a dict"),
         (('test', 'demo', 1), {'i': 13},  # Meta as string
-            "OK", {'timeout': 1000},
+            "OK", {'total_timeout': 1000},
             -2, "meta must be a dict"),
         (('test', 'demo', 1), {'i': 13},  # Meta as string
-            1234, {'timeout': 1000},
+            1234, {'total_timeout': 1000},
             -2, "meta must be a dict"),
     ])
     def test_neg_put_with_invalid_metadata(
@@ -783,12 +741,12 @@ class TestGetPut():
         """
             Invoke put() for a record with generation as string
         """
-        try:
+        with pytest.raises(e.ParamError):
             put_data(self.as_connection, key, record, meta, policy)
-            # self.as_connection.remove(key)
-        except e.ParamError as exception:
-            assert exception.code == ex_code
-            assert exception.msg == ex_msg
+        #     # self.as_connection.remove(key)
+        # except e.ParamError as exception:
+        #     assert exception.code == ex_code
+        #     assert exception.msg == ex_msg
 
     # put edge cases
     def test_edge_put_record_with_bin_name_exceeding_max_limit(self):
@@ -841,11 +799,5 @@ class TestGetPut():
 
         bins = {"no": 11}
 
-        try:
+        with pytest.raises(e.ParamError):
             assert 0 == self.as_connection.put(key, bins)
-
-        except e.ParamError as exception:
-            assert exception.code == -2
-            assert exception.msg == 'integer value for KEY exceeds sys.maxsize'
-        except SystemError as exception:
-            pass
