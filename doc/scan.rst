@@ -167,23 +167,6 @@ Scan Policies
     .. hlist::
         :columns: 1
 
-        * **total_timeout** maximum time in milliseconds to wait for the operation to complete. Default ``0`` means *do not timeout*.
-        * **fail_on_cluster_change** :class:`bool` whether to fail the scan if a change occurs on the cluster. Default ``True``.
-        * **socket_timeout** Maximum time in milliseconds for server side socket timeout. ``0`` means there is no socket timeout. Default ``10000``. Added in version 2.0.11.
-
-
-.. _aerospike_scan_options:
-
-Scan Options
-------------
-
-.. object:: options
-
-    A :class:`dict` of optional scan options which are applicable to :meth:`Scan.foreach`.
-
-    .. hlist::
-        :columns: 1
-
         * **max_retries**
             | An :class:`int`. Maximum number of retries before aborting the current transaction. The initial attempt is not counted as a retry.
             |
@@ -220,6 +203,20 @@ Scan Options
             | Valid for Aerospike Server Enterprise Edition only.
             |
             | Default: ``False`` (do not tombstone deleted records).
+
+
+.. _aerospike_scan_options:
+
+Scan Options
+------------
+
+.. object:: options
+
+    A :class:`dict` of optional scan options which are applicable to :meth:`Scan.foreach`.
+
+    .. hlist::
+        :columns: 1
+
         * **priority** See :ref:`aerospike_scan_constants` for values. Default ``aerospike.SCAN_PRIORITY_AUTO``.
         * **nobins** :class:`bool` whether to return the *bins* portion of the :ref:`aerospike_record_tuple`. Default ``False``.
         * **concurrent** :class:`bool` whether to run the scan concurrently on all nodes of the cluster. Default ``False``.
