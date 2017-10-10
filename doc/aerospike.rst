@@ -53,22 +53,22 @@ in an in-memory primary index.
                 * **system_path** the location of the system modules such as ``aerospike.lua`` (default: ``/usr/local/aerospike/lua``)
                 * **user_path** the location of the user's record and stream UDFs . (default: ``./``)
             * **policies** a :class:`dict` of policies
-                * **total_timeout** default connection timeout in milliseconds
-                * **key** default key policy, with values such as :data:`aerospike.POLICY_KEY_DIGEST`
-                * **exists** default exists policy, with values such as :data:`aerospike.POLICY_EXISTS_CREATE`
-                * **gen** default generation policy, with values such as :data:`aerospike.POLICY_GEN_IGNORE`
-                * **max_retries** default retry policy, with values such as :data:`aerospike.POLICY_RETRY_NONE`
-                * **consistency_level** default consistency level policy, with values such as :data:`aerospike.POLICY_CONSISTENCY_ONE`
-                * **replica** default replica policy, with values such as :data:`aerospike.POLICY_REPLICA_MASTER`
-                * **commit_level** default commit level policy, with values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL`
-                * **read** A dictionary containing read policies. See :ref:`aerospike_read_policies` for available policies
-                * **write** A dictionary containing write policies. See :ref:`aerospike_write_policies` for available policies
-                * **apply** A dictionary containing apply policies. See :ref:`aerospike_apply_policies` for available policies
-                * **operate** A dictionary containing operate policies. See :ref:`aerospike_operate_policies` for available policies
-                * **remove** A dictionary containing remove policies. See :ref:`aerospike_remove_policies` for available policies
-                * **query** A dictionary containing query policies. See :ref:`aerospike_query_policies` for available policies
-                * **scan** A dictionary containing scan policies. See :ref:`aerospike_scan_policies` for available policies
-                * **batch** A dictionary containing batch policies. See :ref:`aerospike_batch_policies` for available policies
+                * **total_timeout** default connection timeout in milliseconds (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **key** default key policy, with values such as :data:`aerospike.POLICY_KEY_DIGEST` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **exists** default exists policy, with values such as :data:`aerospike.POLICY_EXISTS_CREATE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **gen** default generation policy, with values such as :data:`aerospike.POLICY_GEN_IGNORE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **max_retries** default retry policy, with values such as :data:`aerospike.POLICY_RETRY_NONE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **consistency_level** default consistency level policy, with values such as :data:`aerospike.POLICY_CONSISTENCY_ONE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **replica** default replica policy, with values such as :data:`aerospike.POLICY_REPLICA_MASTER` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **commit_level** default commit level policy, with values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
+                * **read** A dictionary containing read policies. See :ref:`aerospike_read_policies` for available policy fields and values.
+                * **write** A dictionary containing write policies. See :ref:`aerospike_write_policies` for available policy fields and values.
+                * **apply** A dictionary containing apply policies. See :ref:`aerospike_apply_policies` for available policy fields and values.
+                * **operate** A dictionary containing operate policies. See :ref:`aerospike_operate_policies` for available policy fields and values.
+                * **remove** A dictionary containing remove policies. See :ref:`aerospike_remove_policies` for available policy fields and values.
+                * **query** A dictionary containing query policies. See :ref:`aerospike_query_policies` for available policy fields and values.
+                * **scan** A dictionary containing scan policies. See :ref:`aerospike_scan_policies` for available policy fields and values.
+                * **batch** A dictionary containing batch policies. See :ref:`aerospike_batch_policies` for available policy fields and values.
             * **shm** a :class:`dict` with optional shared-memory cluster tending parameters. Shared-memory cluster tending is on if the :class:`dict` is provided. If multiple clients are instantiated talking to the same cluster the *shm* cluster-tending should be used.
                 * **max_nodes** maximum number of nodes allowed. Pad so new nodes can be added without configuration changes (default: 16)
                 * **max_namespaces** similarly pad (default: 8)
@@ -119,7 +119,7 @@ in an in-memory primary index.
         # which is appropriate for a multi-process context, such as a webserver
         config = {
             'hosts':    [ ('127.0.0.1', 3000) ],
-            'policies': {'total_timeout': 1000},
+            'policies': {'read': {total_timeout': 1000}},
             'shm':      { }}
         client = aerospike.client(config)
 
