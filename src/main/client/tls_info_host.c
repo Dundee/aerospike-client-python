@@ -24,7 +24,6 @@ send_info_to_tls_host(aerospike* as, as_error* err, const as_policy_info* info_p
 					  const char* request, char** response) {
 
 	as_status status = AEROSPIKE_OK;
-
 	as_cluster* cluster = as->cluster;
 	as_address_iterator iter;
 
@@ -41,6 +40,10 @@ send_info_to_tls_host(aerospike* as, as_error* err, const as_policy_info* info_p
 	struct sockaddr* addr;
 	status = AEROSPIKE_ERR_CLUSTER;
 	bool loop = true;
+
+	if (!info_policy) {
+		info_policy = &as->config.policies.info;
+	}
 	uint64_t deadline = as_socket_deadline(info_policy->timeout);
 
 	while (loop && as_lookup_next(&iter, &addr)) {
