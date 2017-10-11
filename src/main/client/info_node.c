@@ -28,6 +28,7 @@
 #include "conversions.h"
 #include "exceptions.h"
 #include "policy.h"
+#include "tls_info_host.h"
 
 /**
  ********************************************************************************************************
@@ -58,10 +59,13 @@ static PyObject * AerospikeClient_InfoNode_Invoke(
 	PyObject * py_response = NULL;
 	PyObject * py_ustr = NULL;
 	PyObject * py_ustr1 = NULL;
+	PyObject* py_uni_tls_name = NULL;
+
 	as_policy_info info_policy;
 	as_policy_info* info_policy_p = NULL;
 	as_host * host = NULL;
-	char* address =NULL;
+	char* address = NULL;
+	char* tls_name = NULL;
 	long port_no;
 	char* response_p = NULL;
 	as_status status = AEROSPIKE_OK;
@@ -99,7 +103,7 @@ static PyObject * AerospikeClient_InfoNode_Invoke(
 	}
 
 	if (py_host) {
-		if (PyTuple_Check(py_host) && PyTuple_Size(py_host) == 2) {
+		if (PyTuple_Check(py_host) && ((PyTuple_Size(py_host) == 2) || (PyTuple_Size(py_host) == 3))) {
 			PyObject * py_addr = PyTuple_GetItem(py_host,0);
 			PyObject * py_port = PyTuple_GetItem(py_host,1);
 
@@ -115,6 +119,26 @@ static PyObject * AerospikeClient_InfoNode_Invoke(
 			else if (PyLong_Check(py_port)) {
 				port_no = (uint16_t) PyLong_AsLong(py_port);
 			}
+
+			/* handle TLS_NAME if present */
+			if (PyTuple_Size(py_host) == 3) {
+				PyObject * py_tls = PyTuple_GetItem(py_host, 2);
+
+				if (PyString_Check(py_tls)) {
+					tls_name = PyString_AsString(py_tls);
+				} else if (PyUnicode_Check(py_tls)) {
+					py_uni_tls_name = PyUnicode_AsUTF8String(py_tls);
+					if (!py_uni_tls_name) {
+						as_error_update(err, AEROSPIKE_ERR_PARAM, "Invalid unicode value");
+						goto CLEANUP;
+					}
+					tls_name = PyBytes_AsString(py_uni_tls_name);
+				} else {
+					as_error_update(err, AEROSPIKE_ERR_PARAM, "tls name must be string or unicode");
+					goto CLEANUP;
+				}
+			}
+
 		} else if (!PyTuple_Check(py_host)) {
 			as_error_update(err, AEROSPIKE_ERR_PARAM, "Host should be a specified in form of Tuple.");
 			goto CLEANUP;
@@ -133,9 +157,15 @@ static PyObject * AerospikeClient_InfoNode_Invoke(
 	}
 
 	Py_BEGIN_ALLOW_THREADS
-	status = aerospike_info_host(self->as, err, info_policy_p,
-		(const char *) address, (uint16_t) port_no, request_str_p,
-		&response_p);
+	if (!tls_name) {
+		status = aerospike_info_host(self->as, err, info_policy_p,
+			(const char *) address, (uint16_t) port_no, request_str_p,
+			&response_p);
+	} else {
+		/* Using tls, need to do the slow path */
+		status = send_info_to_tls_host(self->as, err, info_policy_p, address, port_no, tls_name,
+									   (const char *) request_str_p, &response_p);
+	}
 	Py_END_ALLOW_THREADS
 	if (err->code == AEROSPIKE_OK) {
 		if (response_p && status == AEROSPIKE_OK) {
@@ -160,6 +190,9 @@ CLEANUP:
 	}
 	if (py_ustr1) {
 		Py_DECREF(py_ustr1);
+	}
+	if (py_uni_tls_name) {
+		Py_DECREF(py_uni_tls_name);
 	}
 
 	if (err->code != AEROSPIKE_OK) {
