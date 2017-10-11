@@ -22,6 +22,7 @@
 #include <aerospike/as_error.h>
 #include <aerospike/as_node.h>
 #include <aerospike/as_record.h>
+#include <aerospike/as_cluster.h>
 
 #include "client.h"
 #include "conversions.h"
@@ -203,170 +204,112 @@ PyObject * AerospikeClient_InfoNode(AerospikeClient * self, PyObject * args, PyO
 	return AerospikeClient_InfoNode_Invoke(&err, self, py_request, py_host, py_policy);
 
 }
-/**
- ******************************************************************************************************
- * Iterates over the hosts in the cluster and creates the list to be returned to the python client.
- *
- * @param err                   as_error object
- * @param command               Request string sent from the python client
- * @param nodes_tuple           List containing details of each host
- * @param return_value          List t o be returned back to the python client
- * @param host_index            Index of the list nodes_tuple
- * @param index                 Index of the list to be returned.
- *
- * Returns information about a host.
- ********************************************************************************************************/
-static PyObject * AerospikeClient_GetNodes_Returnlist(as_error* err,
-	PyObject * command, PyObject * nodes_tuple[], PyObject * return_value,
-	uint32_t host_index, Py_ssize_t index) {
 
-	char* tok = NULL;
-	char* saved = NULL;
-	PyObject * value_tok = NULL;
-	bool break_flag = false;
+	/**
+	 ******************************************************************************************************
+	 * Returns data about the nodes to AerospikeClient_GetNodes.
+	 *
+	 * @param self                  AerospikeClient object
+	 *
+	 * Returns a list containing the details of the nodes.
+	 ********************************************************************************************************/
+	static PyObject * AerospikeClient_GetNodes_Invoke(
+		AerospikeClient * self) {
 
-	tok = strtok_r(PyString_AsString(command), INFO_REQUEST_RESPONSE_DELIMITER, &saved);
-	if (!tok) {
-		as_error_update(err, AEROSPIKE_ERR_CLIENT, "Unable to get addr in service");
-		goto CLEANUP;
-	}
-	while (tok && (host_index < MAX_HOST_COUNT)) {
-		tok = strtok_r(NULL, IP_PORT_DELIMITER, &saved);
-#if defined(__APPLE__)
-		if (!tok || !saved) {
-#else
-		if (!tok || *saved == '\0') {
-#endif
+		PyObject* py_hostname = NULL;
+		PyObject* py_port = NULL;
+		PyObject* return_value = PyList_New(0);
+
+		as_nodes* nodes = NULL;
+		char* hostname = NULL;
+		char* split_point = NULL;
+
+		as_error err;
+		as_error_init(&err);
+
+		if (!self || !self->as) {
+			as_error_update(&err, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
 			goto CLEANUP;
 		}
 
-		nodes_tuple[host_index] = PyTuple_New(2);
-
-		value_tok = PyString_FromString(tok);
-		PyTuple_SetItem(nodes_tuple[host_index], 0 , value_tok);
-		//Py_DECREF(value_tok);
-
-		if (strcmp(PyString_AsString(command),"response_services_p")) {
-			tok = strtok_r(NULL, HOST_DELIMITER, &saved);
-			if (!tok) {
-				as_error_update(err, AEROSPIKE_ERR_CLIENT, "Unable to get port");
-				goto CLEANUP;
-			}
-
-			if (strstr(tok, INFO_RESPONSE_END)) {
-				tok = strtok_r(tok, INFO_RESPONSE_END, &saved);
-				break_flag = true;
-			}
-		} else {
-			tok = strtok_r(NULL, INFO_RESPONSE_END, &saved);
-			if (!tok) {
-				as_error_update(err, AEROSPIKE_ERR_CLIENT, "Unable to get port in service");
-				goto CLEANUP;
-			}
-		}
-
-		value_tok = PyInt_FromString(tok, NULL, 10);
-		PyTuple_SetItem(nodes_tuple[host_index], 1 , value_tok);
-		PyList_Insert(return_value, index , nodes_tuple[host_index]);
-		Py_DECREF(nodes_tuple[host_index]);
-		index++;
-		host_index++;
-
-		if (break_flag) {
+		if (!self->is_conn_16) {
+			as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "No connection to aerospike cluster");
 			goto CLEANUP;
 		}
 
-	}
-CLEANUP:
-
-	if (err->code != AEROSPIKE_OK) {
-		PyObject * py_err = NULL;
-		error_to_pyobject(err, &py_err);
-		PyObject *exception_type = raise_exception(err);
-		PyErr_SetObject(exception_type, py_err);
-		Py_DECREF(py_err);
-		return NULL;
-	}
-	return return_value;
-}
-/**
- ******************************************************************************************************
- * Returns data about the nodes to AerospikeClient_GetNodes.
- *
- * @param self                  AerospikeClient object
- *
- * Returns a list containing the details of the nodes.
- ********************************************************************************************************/
-static PyObject * AerospikeClient_GetNodes_Invoke(
-	AerospikeClient * self) {
-
-	PyObject * response_services_p = NULL;
-	PyObject * response_service_p = NULL;
-	PyObject * nodes_tuple[MAX_HOST_COUNT] = {0};
-	PyObject * return_value = PyList_New(0);
-
-	as_error err;
-	as_error_init(&err);
-
-	if (!self || !self->as) {
-		as_error_update(&err, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
-		goto CLEANUP;
-	}
-
-	if (!self->is_conn_16) {
-		as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "No connection to aerospike cluster");
-		goto CLEANUP;
-	}
-
-	PyObject * py_req_str = NULL;
-	py_req_str = PyString_FromString("services");
-	response_services_p = AerospikeClient_InfoNode_Invoke(&err, self, py_req_str, NULL, NULL);
-	Py_DECREF(py_req_str);
-	if (!response_services_p) {
-		if (err.code == AEROSPIKE_OK) {
-			as_error_update(&err, AEROSPIKE_ERR_CLIENT, "Services call returned an error");
+		aerospike* as = self->as;
+		as_cluster* cluster = as->cluster;
+		// If the cluster goes down between the last call and this call, this could theoretically occur.
+		if (!cluster) {
+			as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "invalid aerospike cluster");
+			goto CLEANUP;
 		}
-		goto CLEANUP;
-	}
 
-	py_req_str = PyString_FromString("service");
-	response_service_p = AerospikeClient_InfoNode_Invoke(&err, self, py_req_str, NULL, NULL);
-	Py_DECREF(py_req_str);
-	if (!response_service_p) {
-		if (err.code == AEROSPIKE_OK) {
-			as_error_update(&err, AEROSPIKE_ERR_CLIENT, "Service call returned an error");
+		nodes = as_nodes_reserve(cluster);
+
+		if (!nodes) {
+			as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "Cluster is empty");
+			goto CLEANUP;
 		}
-		goto CLEANUP;
+
+		for (uint32_t i = 0; i < nodes->size; i++) {
+			as_node* node = nodes->array[i];
+			hostname = (char*)as_node_get_address_string(node);
+
+			split_point = strrchr(hostname, ':');
+			if (!split_point) {
+				as_error_update(&err, AEROSPIKE_ERR_CLIENT, "Malformed host name string");
+				goto CLEANUP;
+			}
+			Py_ssize_t host_length = split_point - hostname;
+			py_hostname = PyString_FromStringAndSize(hostname, host_length);
+
+			if (!py_hostname) {
+				as_error_update(&err, AEROSPIKE_ERR_CLIENT, "Failed to create python hostname");
+				goto CLEANUP;
+			}
+
+			// convert "3000" -> 3000, using base 10 | use long since it works in 2 & 3
+			py_port = PyLong_FromString(split_point + 1, NULL, 10);
+			if (!py_port || PyErr_Occurred()) {
+				// py_port exists
+				Py_XDECREF(py_hostname);
+				as_error_update(&err, AEROSPIKE_ERR_CLIENT, "Non numeric port found");
+				goto CLEANUP;
+			}
+			PyObject* py_host_pair = Py_BuildValue("OO", py_hostname, py_port);
+
+			Py_XDECREF(py_port);
+			Py_XDECREF(py_hostname);
+
+			if(!py_host_pair) {
+				as_error_update(&err, AEROSPIKE_ERR_CLIENT, "Failed to build node info tuple");
+				goto CLEANUP;
+			}
+
+			PyList_Append(return_value, py_host_pair);
+			Py_DecRef(py_host_pair);
+		}
+	CLEANUP:
+		if(nodes) {
+			as_nodes_release(nodes);
+		}
+		if (err.code != AEROSPIKE_OK) {
+			// Clear the return value if it exists
+			Py_XDECREF(return_value);
+			PyObject * py_err = NULL;
+			error_to_pyobject(&err, &py_err);
+			PyObject *exception_type = raise_exception(&err);
+			PyErr_SetObject(exception_type, py_err);
+			Py_DECREF(py_err);
+
+			return NULL;
+		}
+
+		return return_value;
 	}
 
-	return_value = AerospikeClient_GetNodes_Returnlist(&err, response_service_p, nodes_tuple, return_value, 0, 0);
-	if (return_value)
-		return_value = AerospikeClient_GetNodes_Returnlist(&err, response_services_p, nodes_tuple, return_value, 1, 1);
-
-CLEANUP:
-
-	if (response_services_p) {
-		Py_DECREF(response_services_p);
-	}
-
-	if (response_service_p) {
-		Py_DECREF(response_service_p);
-	}
-
-	if (err.code != AEROSPIKE_OK) {
-		PyObject * py_err = NULL;
-		error_to_pyobject(&err, &py_err);
-		PyObject *exception_type = raise_exception(&err);
-		PyErr_SetObject(exception_type, py_err);
-		Py_DECREF(py_err);
-		return NULL;
-	}
-
-	return return_value;
-}
-
-/**
- ******************************************************************************************************
+/******************************************************************************************************
  * Returns data about the nodes in a cluster of the database.
  *
  * @param self                  AerospikeClient object
