@@ -399,6 +399,9 @@ as_status pyobject_to_policy_apply(as_error * err, PyObject * py_policy,
 	POLICY_SET_BASE_FIELD(sleep_between_retries, uint32_t);
 
 	POLICY_SET_FIELD(key, as_policy_key);
+	POLICY_SET_FIELD(replica, as_policy_replica);
+	POLICY_SET_FIELD(gen, as_policy_gen);
+	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
 	POLICY_SET_FIELD(durable_delete, bool);
 
 	// Update the policy
@@ -495,6 +498,7 @@ as_status pyobject_to_policy_read(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(consistency_level, as_policy_consistency_level);
 	POLICY_SET_FIELD(replica, as_policy_replica);
+	POLICY_SET_FIELD(deserialize, bool);
 
 	// Update the policy
 	POLICY_UPDATE();
@@ -532,6 +536,7 @@ as_status pyobject_to_policy_remove(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(key, as_policy_key);
 	POLICY_SET_FIELD(gen, as_policy_gen);
 	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
+	POLICY_SET_FIELD(replica, as_policy_replica);
 	POLICY_SET_FIELD(durable_delete, bool);
 
 	// Update the policy
@@ -606,6 +611,8 @@ as_status pyobject_to_policy_write(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(exists, as_policy_exists);
 	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
 	POLICY_SET_FIELD(durable_delete, bool);
+	POLICY_SET_FIELD(replica, as_policy_replica);
+	POLICY_SET_FIELD(compression_threshold, uint32_t)
 
 	// Update the policy
 	POLICY_UPDATE();
@@ -644,6 +651,7 @@ as_status pyobject_to_policy_operate(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(consistency_level, as_policy_consistency_level);
 	POLICY_SET_FIELD(replica, as_policy_replica);
 	POLICY_SET_FIELD(durable_delete, bool);
+	POLICY_SET_FIELD(deserialize, bool);
 
 	// Update the policy
 	POLICY_UPDATE();
