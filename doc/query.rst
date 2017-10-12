@@ -53,12 +53,13 @@ Query Class --- :class:`Query`
         .. note:: Currently, you can assign at most one predicate to the query.
 
 
-    .. method:: results([policy]) -> list of (key, meta, bins)
+    .. method:: results([,policy [, options]]) -> list of (key, meta, bins)
 
         Buffer the records resulting from the query, and return them as a \
         :class:`list` of records.
 
         :param dict policy: optional :ref:`aerospike_query_policies`.
+        :param dict options: optional :ref:`aerospike_query_options`.
         :return: a :class:`list` of :ref:`aerospike_record_tuple`.
 
         .. code-block:: python
@@ -84,13 +85,14 @@ Query Class --- :class:`Query`
             Queries require a secondary index to exist on the *bin* being queried.
 
 
-    .. method:: foreach(callback[, policy])
+    .. method:: foreach(callback[, policy [, options]])
 
         Invoke the *callback* function for each of the records streaming back \
         from the query.
 
         :param callable callback: the function to invoke for each record.
         :param dict policy: optional :ref:`aerospike_query_policies`.
+        :param dict options: optional :ref:`aerospike_query_options`.
 
         .. note:: A :ref:`aerospike_record_tuple` is passed as the argument to the callback function.
 
@@ -281,3 +283,19 @@ Query Policies
             | :class:`bool` Should raw bytes representing a list or map be deserialized to a list or dictionary.
             | Set to `False` for backup programs that just need access to raw bytes.
             | Default: ``True``
+
+.. _aerospike_query_options:
+
+Query Options
+--------------
+
+.. object:: options
+
+    A :class:`dict` of optional scan options which are applicable to :meth:`Query.foreach` and :meth:`Query.results`.
+
+    .. hlist::
+        :columns: 1
+
+        * **nobins** :class:`bool` whether to return the *bins* portion of the :ref:`aerospike_record_tuple`. Default ``False``.
+
+    .. versionadded:: 3.0.0
