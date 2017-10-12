@@ -45,6 +45,8 @@ static as_status send_info_to_host_list(PyObject* host_list, char* request, PyOb
 		aerospike* as, as_policy_info* policy, as_error* err);
 
 static PyObject * AerospikeClient_InfoAll(AerospikeClient * self, PyObject * args, PyObject * kwds);
+
+static PyObject* get_formatted_info_response(const char* response);
 /**
  ********************************************************************************************************
  * Macros for Info API.
@@ -90,25 +92,14 @@ static bool AerospikeClient_Info_each(as_error * err, const as_node * node, cons
 		as_error_update(err, err->code, NULL);
 		goto CLEANUP;
 	}
-	else if (res) {
-		char * out = strchr(res,'\t');
-		if (out) {
-			out++;
-			py_out = PyString_FromString(out);
-		}
-		else {
-			py_out = PyString_FromString(res);
-		}
-	}
+
+	py_out = get_formatted_info_response(res);
+	/* Since this is called from aerospike_info_foreach, we do not own res, so there is no need to free it */
+
 
 	if (!py_err) {
 		Py_INCREF(Py_None);
 		py_err = Py_None;
-	}
-
-	if (!py_out) {
-		Py_INCREF(Py_None);
-		py_out = Py_None;
 	}
 
 	PyObject * py_res = PyTuple_New(2);
@@ -117,7 +108,6 @@ static bool AerospikeClient_Info_each(as_error * err, const as_node * node, cons
 
 	PyObject * py_nodes = (PyObject *) udata_ptr->udata_p;
 	PyDict_SetItemString(py_nodes, node->name, py_res);
-
 
 	Py_DECREF(py_res);
 
@@ -285,6 +275,7 @@ CLEANUP:
  *
  * Returns a server response for the particular request string.
  * In case of error,appropriate exceptions will be raised.
+ * py_hosts should be null at this point
  *******************************************************************************************************
  */
 PyObject * AerospikeClient_InfoAll(AerospikeClient * self, PyObject * args, PyObject * kwds)
@@ -378,11 +369,21 @@ CLEANUP:
 	return info_callback_udata.udata_p;
 }
 
-/*
+
+
+/**
+ *******************************************************************************************************
+ * Sends an info to every host specified in a list of host tuples. Fill a dictionary with responses
  *
- * Send info requests to every node specified in a list:  [(hostname, port, [tls-name), (hostname, port, [tls-name), ...]
- * fills responses into the passed reponse dict
+ * @param desired format is a host_list a list of tuples of the form: [(hostname, port, [tls-name), (hostname, port, [tls-name), ...]
+ * @param request the info request to be passed through to the c api
+ * @param py_response_dict an allocated Python dictionary which will be filled with entries of the form {hostname: (None, response)}
+ * @param as the aerospike structure embedded in the calling class
+ * @param policy a possibly null pointer to policies to be used for this call
+ * @param err an error pointer to be filled if anything incorrect happens
  *
+ * @returns as_status enum value AEROSPIKE_OK on success. This return value will also be stored in err->code
+ *******************************************************************************************************
  */
 static as_status
 send_info_to_host_list(PyObject* host_list, char* request, PyObject* py_response_dict, aerospike* as,
@@ -430,8 +431,28 @@ CLEANUP:
  * output is formatted as {hostname: (None, response)}
  * response is either a string or None
  */
+
+/**
+ *******************************************************************************************************
+  * Send an info request to a single host, specified as a tuple (hostname, port, [tls-name])
+ * if tls-name is omitted, then aerospike_info_host is used, else:
+ * send_info_to_tls_host is used
+ * output is formatted as {hostname: (None, response)}
+ * response is either a string or None
+ *
+ * @param host_tuple At this point, this is guaranteed to be a tuple of length 2 or 3, expected format is:
+ * 			(String hostname, int port, [ Optional String tls-name])
+ * @param request the info request to be passed through to the c api
+ * @param py_response_dict an allocated Python dictionary which will be filled with entries of the form {hostname: (None, response)}
+ * @param as the aerospike structure embedded in the calling class
+ * @param policy a possibly null pointer to policies to be used for this call
+ * @param err an error pointer to be filled if anything incorrect happens
+ *
+ * @returns as_status enum value AEROSPIKE_OK on success. This return value will also be stored in err->code
+ *******************************************************************************************************
+ */
 static as_status
-send_info_to_host(PyObject* host_tuple, char* req, PyObject* py_response_dict, aerospike* as,
+send_info_to_host(PyObject* host_tuple, char* request, PyObject* py_response_dict, aerospike* as,
 		as_policy_info* policy, as_error* err) {
 	PyObject* hostname_entry = NULL;
 	PyObject* port_entry = NULL;
@@ -442,7 +463,7 @@ send_info_to_host(PyObject* host_tuple, char* req, PyObject* py_response_dict, a
 	char* tls_name = NULL;
 	char* hostname = NULL;
 	uint16_t port;
-	char* res = NULL;
+	char* response = NULL;
 
 	hostname_entry = PyTuple_GetItem(host_tuple, 0);
 
@@ -481,6 +502,7 @@ send_info_to_host(PyObject* host_tuple, char* req, PyObject* py_response_dict, a
 		goto CLEANUP;
 	}
 
+	/* tuple is (hostname, port, tls-name) */
 	if (PyTuple_Size(host_tuple) == 3) {
 		tls_entry = PyTuple_GetItem(host_tuple, 2);
 
@@ -497,41 +519,29 @@ send_info_to_host(PyObject* host_tuple, char* req, PyObject* py_response_dict, a
 			as_error_update(err, AEROSPIKE_ERR_PARAM, "tls_name must be string or unicode");
 			goto CLEANUP;
 		}
-
 	}
 
 	Py_BEGIN_ALLOW_THREADS
 
 	if (tls_name) {
 		send_info_to_tls_host(as, err, policy, hostname, port, tls_name,
-									   (const char *) req, &res);
+									   (const char *) request, &response);
 	} else {
-		aerospike_info_host(as, err, policy, hostname, port, (const char *) req, &res);
+		aerospike_info_host(as, err, policy, hostname, port, (const char *) request, &response);
 	}
 
 	Py_END_ALLOW_THREADS
 
 	if (err->code == AEROSPIKE_OK) {
 		PyObject* py_response = NULL;
-		/* If we got a response use it, otherwise put None */
-		if (res) {
 
-			/* Remove the echoed request from the start of the response */
-			char * out = strchr(res,'\t');
-			if (out) {
-				out++;
-				py_response = PyString_FromString(out);
-			}
-			else {
-				py_response = PyString_FromString(res);
-			}
-			/* PyString_FromString does a copy, so we need to free this */
-			free(res);
-		} else {
-			py_response = Py_None;
+		py_response = get_formatted_info_response(response);
+		/* If response is filled, it was allocated, so we need to free it. */
+		if (response) {
+			free(response);
 		}
 
-		// For historical reasons the value is a tuple: (None, "response"|None)
+		/* For historical reasons the value is a tuple: (None, "response"|None) */
 		PyObject* py_out_tuple = Py_BuildValue("OO", Py_None, py_response);
 		Py_DECREF(py_response);
 
@@ -547,4 +557,33 @@ CLEANUP:
 	Py_XDECREF(unicode_tlsname);
 	Py_XDECREF(unicode_hostname);
 	return err->code;
+}
+
+/*
+ * Generally a response is of the form: request\tresponse
+ * this returns the response portion only. If response is null, returns Py_None
+ * This returns either a new reference, or Py_None with Py_None's reference count increased by 1
+ */
+static PyObject*
+get_formatted_info_response(const char* response) {
+	PyObject* py_response = NULL;
+	char* formatted_output = NULL;
+
+	if (response) {
+		/* Remove the echoed request from the start of the response */
+		formatted_output = strchr(response,'\t');
+		if (formatted_output) {
+			/* Advance one character past the '\t' */
+			formatted_output++;
+			py_response = PyString_FromString(formatted_output);
+		}
+		else {
+			py_response = PyString_FromString(formatted_output);
+		}
+	} else {
+		Py_INCREF(Py_None);
+		py_response = Py_None;
+	}
+
+	return py_response;
 }
