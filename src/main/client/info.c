@@ -31,12 +31,20 @@
 #include "exceptions.h"
 #include <arpa/inet.h>
 
+#include "tls_info_host.h"
+
 typedef struct foreach_callback_info_udata_t {
 	PyObject       *udata_p;
 	PyObject       *host_lookup_p;
 	as_error       error;
 } foreach_callback_info_udata;
 
+static as_status send_info_to_host(PyObject* host_tuple, char* request, PyObject* py_response_dict,  aerospike* as,
+		as_policy_info* policy, as_error* err);
+static as_status send_info_to_host_list(PyObject* host_list, char* request, PyObject* py_response_dict,
+		aerospike* as, as_policy_info* policy, as_error* err);
+
+static PyObject * AerospikeClient_InfoAll(AerospikeClient * self, PyObject * args, PyObject * kwds);
 /**
  ********************************************************************************************************
  * Macros for Info API.
@@ -74,7 +82,6 @@ static bool AerospikeClient_Info_each(as_error * err, const as_node * node, cons
 	PyObject * py_ustr = NULL;
 	PyObject * py_out = NULL;
 	foreach_callback_info_udata* udata_ptr = (foreach_callback_info_udata *) udata;
-	as_address* addr = NULL;
 
 	// Need to make sure we have the GIL since we're back in python land now
 	PyGILState_STATE gil_state = PyGILState_Ensure();
@@ -108,74 +115,9 @@ static bool AerospikeClient_Info_each(as_error * err, const as_node * node, cons
 	PyTuple_SetItem(py_res, 0, py_err);
 	PyTuple_SetItem(py_res, 1, py_out);
 
-	if (udata_ptr->host_lookup_p) {
-		PyObject * py_hosts = (PyObject *)udata_ptr->host_lookup_p;
-			if (py_hosts && PyList_Check(py_hosts)) {
-				addr = as_node_get_address((as_node *)node);
-				int size = (int) PyList_Size(py_hosts);
-				for (int i = 0; i < size; i++) {
-					char * host_addr = NULL;
-					int port = -1;
-					PyObject * py_host = PyList_GetItem(py_hosts, i);
-					if (PyTuple_Check(py_host) && PyTuple_Size(py_host) == 2) {
-						PyObject * py_addr = PyTuple_GetItem(py_host,0);
-						PyObject * py_port = PyTuple_GetItem(py_host,1);
-						if (PyUnicode_Check(py_addr)) {
-							py_ustr = PyUnicode_AsUTF8String(py_addr);
-							host_addr = PyBytes_AsString(py_ustr);
-						} else if (PyString_Check(py_addr)) {
-							host_addr = PyString_AsString(py_addr);
-						} else {
-							as_error_update(&udata_ptr->error, AEROSPIKE_ERR_PARAM, "Host address is of type incorrect");
-							if (py_res) {
-								Py_DECREF(py_res);
-							}
-							PyGILState_Release(gil_state);
-							return false;
-						}
-						if (PyInt_Check(py_port)) {
-							port = (uint16_t) PyInt_AsLong(py_port);
-						}
-						else if (PyLong_Check(py_port)) {
-							port = (uint16_t) PyLong_AsLong(py_port);
-						} else {
-							break;
-						}
-						char ip_port[IP_PORT_MAX_LEN];
-						// If the address is longer than the max length of an ipv6 address, raise an error and exit
-						if (strnlen(host_addr, INET6_ADDRSTRLEN) >= INET6_ADDRSTRLEN) {
-							as_error_update(&udata_ptr->error, AEROSPIKE_ERR_PARAM, "Host address is too long");
-							if (py_res) {
-								Py_DECREF(py_res);
-							}
-							goto CLEANUP;
-						}
-						sprintf(ip_port, "%s:%d", host_addr, port);
-						if ( !strcmp(ip_port, addr->name) ) {
-							PyObject * py_nodes = (PyObject *) udata_ptr->udata_p;
-							PyDict_SetItemString(py_nodes, node->name, py_res);
-						} else {
-							sprintf(ip_port, "[%s]:%d", host_addr, port);
-							if ( !strcmp(ip_port, addr->name) ) {
-								PyObject * py_nodes = (PyObject *) udata_ptr->udata_p;
-								PyDict_SetItemString(py_nodes, node->name, py_res);
-							}
-						}
-					}
+	PyObject * py_nodes = (PyObject *) udata_ptr->udata_p;
+	PyDict_SetItemString(py_nodes, node->name, py_res);
 
-					if (py_ustr) {
-						Py_DECREF(py_ustr);
-						py_ustr = NULL;
-					}
-				}
-			} else if (!PyList_Check(py_hosts)) {
-				as_error_update(&udata_ptr->error, AEROSPIKE_ERR_PARAM, "Hosts should be specified in a list.");
-				goto CLEANUP;
-			}
-	} else {
-		PyObject * py_nodes = (PyObject *) udata_ptr->udata_p;
-		PyDict_SetItemString(py_nodes, node->name, py_res);
-	}
 
 	Py_DECREF(py_res);
 
@@ -220,6 +162,132 @@ CLEANUP:
  *******************************************************************************************************
  */
 PyObject * AerospikeClient_Info(AerospikeClient * self, PyObject * args, PyObject * kwds)
+{
+	PyObject * py_req = NULL;
+	PyObject * py_policy = NULL;
+	PyObject * py_hosts = NULL;
+	PyObject * py_nodes = NULL;
+	PyObject * py_ustr = NULL;
+
+	static char * kwlist[] = {"command", "hosts", "policy", NULL};
+
+	if (PyArg_ParseTupleAndKeywords(args, kwds, "O|OO:info", kwlist, &py_req, &py_hosts, &py_policy) == false) {
+		return NULL;
+	}
+
+	// If there aren't nodes, call the function which sends a message to all nodes
+	// Otherwise send to specified hosts
+	if (!py_hosts) {
+		return AerospikeClient_InfoAll(self, args, kwds);
+	}
+
+	as_error err;
+	as_error_init(&err);
+
+	as_policy_info info_policy;
+	as_policy_info* info_policy_p = NULL;
+
+	if (!self || !self->as) {
+		as_error_update(&err, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
+		goto CLEANUP;
+	}
+	if (!self->is_conn_16) {
+		as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "No connection to aerospike cluster");
+		goto CLEANUP;
+	}
+
+	// Convert python policy object to as_policy_info
+	pyobject_to_policy_info(&err, py_policy, &info_policy, &info_policy_p,
+					&self->as->config.policies.info);
+	if (err.code != AEROSPIKE_OK) {
+		goto CLEANUP;
+	}
+	char * req = NULL;
+	if (PyUnicode_Check(py_req)) {
+		py_ustr = PyUnicode_AsUTF8String(py_req);
+		req = PyBytes_AsString(py_ustr);
+	} else if (PyString_Check(py_req)) {
+		req = PyString_AsString(py_req);
+	} else {
+		as_error_update(&err, AEROSPIKE_ERR_PARAM, "Request must be a string");
+		goto CLEANUP;
+	}
+
+	py_nodes = PyDict_New();
+	send_info_to_host_list(py_hosts, req, py_nodes, self->as, info_policy_p, &err);
+
+CLEANUP:
+	if (py_ustr) {
+		Py_DECREF(py_ustr);
+	}
+
+	if (err.code != AEROSPIKE_OK) {
+		PyObject * py_err = NULL;
+		error_to_pyobject(&err, &py_err);
+		PyObject *exception_type = raise_exception(&err);
+		PyErr_SetObject(exception_type, py_err);
+		Py_DECREF(py_err);
+		if (py_nodes) {
+			Py_DECREF(py_nodes);
+		}
+		return NULL;
+	}
+
+	return py_nodes;
+}
+
+
+PyObject * AerospikeClient_HasGeo(AerospikeClient * self, PyObject * args, PyObject * kwds)
+{
+	// Initialize error
+	as_error err;
+	as_error_init(&err);
+
+	if (!self || !self->as) {
+		as_error_update(&err, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
+		goto CLEANUP;
+	}
+
+	if (!self->is_conn_16) {
+		as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "No connection to aerospike cluster");
+		goto CLEANUP;
+	}
+
+	if (aerospike_has_geo(self->as)) {
+		Py_INCREF(Py_True);
+		return Py_True;
+	}
+
+	Py_INCREF(Py_False);
+	return Py_False;
+
+CLEANUP:
+
+	if (err.code != AEROSPIKE_OK) {
+		PyObject * py_err = NULL;
+		error_to_pyobject(&err, &py_err);
+		PyObject *exception_type = raise_exception(&err);
+		PyErr_SetObject(exception_type, py_err);
+		Py_DECREF(py_err);
+		return NULL;
+	}
+	return NULL;
+}
+
+/**
+ *******************************************************************************************************
+ * Sends an info request to all the nodes in a cluster.
+ *
+ * @param self                  AerospikeClient object
+ * @param args                  The args is a tuple object containing an argument
+ *                              list passed from Python to a C function
+ * @param kwds                  Dictionary of keywords
+ *
+ * Returns a server response for the particular request string.
+ * In case of error,appropriate exceptions will be raised.
+ *******************************************************************************************************
+ */
+PyObject * AerospikeClient_InfoAll(AerospikeClient * self, PyObject * args, PyObject * kwds)
 {
 	PyObject * py_req = NULL;
 	PyObject * py_policy = NULL;
@@ -310,41 +378,173 @@ CLEANUP:
 	return info_callback_udata.udata_p;
 }
 
+/*
+ *
+ * Send info requests to every node specified in a list:  [(hostname, port, [tls-name), (hostname, port, [tls-name), ...]
+ * fills responses into the passed reponse dict
+ *
+ */
+static as_status
+send_info_to_host_list(PyObject* host_list, char* request, PyObject* py_response_dict, aerospike* as,
+		as_policy_info* policy, as_error* err) {
+	Py_ssize_t list_length;
+	PyObject* host_entry = NULL;
 
-PyObject * AerospikeClient_HasGeo(AerospikeClient * self, PyObject * args, PyObject * kwds)
-{
-	// Initialize error
-	as_error err;
-	as_error_init(&err);
-
-	if (!self || !self->as) {
-		as_error_update(&err, AEROSPIKE_ERR_PARAM, "Invalid aerospike object");
+	if (!PyList_Check(host_list)) {
+		as_error_update(err, AEROSPIKE_ERR_PARAM, "hosts must be a list");
 		goto CLEANUP;
 	}
 
-	if (!self->is_conn_16) {
-		as_error_update(&err, AEROSPIKE_ERR_CLUSTER, "No connection to aerospike cluster");
-		goto CLEANUP;
-	}
+	list_length = PyList_Size(host_list);
+	for (Py_ssize_t i = 0; i < list_length; i++) {
+		host_entry = PyList_GetItem(host_list, i);
 
-	if (aerospike_has_geo(self->as)) {
-		Py_INCREF(Py_True);
-		return Py_True;
-	}
+		if (!host_entry) {
+			as_error_update(err, AEROSPIKE_ERR_CLIENT, "failed to get a host tuple");
+			goto CLEANUP;
+		}
 
-	Py_INCREF(Py_False);
-	return Py_False;
+		if (!PyTuple_Check(host_entry)) {
+			as_error_update(err, AEROSPIKE_ERR_PARAM, "host must be a tuple");
+			goto CLEANUP;
+		}
+
+		if (PyTuple_Size(host_entry) != 2 && (PyTuple_Size(host_entry) != 3)) {
+			as_error_update(err, AEROSPIKE_ERR_CLIENT, "info host info must be (host, port) or (host, port, tls-name)");
+			goto CLEANUP;
+		}
+
+		if (send_info_to_host(host_entry, request, py_response_dict, as, policy, err) != AEROSPIKE_OK) {
+			goto CLEANUP;
+		}
+	}
 
 CLEANUP:
-
-	if (err.code != AEROSPIKE_OK) {
-		PyObject * py_err = NULL;
-		error_to_pyobject(&err, &py_err);
-		PyObject *exception_type = raise_exception(&err);
-		PyErr_SetObject(exception_type, py_err);
-		Py_DECREF(py_err);
-		return NULL;
-	}
-	return NULL;
+	return err->code;
 }
 
+/*
+ * Send an info request to a single host, specified as a tuple (hostname, port, [tls-name])
+ * if tls-name is omitted, then aerospike_info_host is used, else:
+ * send_info_to_tls_host is used
+ * output is formatted as {hostname: (None, response)}
+ * response is either a string or None
+ */
+static as_status
+send_info_to_host(PyObject* host_tuple, char* req, PyObject* py_response_dict, aerospike* as,
+		as_policy_info* policy, as_error* err) {
+	PyObject* hostname_entry = NULL;
+	PyObject* port_entry = NULL;
+	PyObject* unicode_hostname = NULL;
+	PyObject* unicode_tlsname = NULL;
+	PyObject* tls_entry = NULL;
+
+	char* tls_name = NULL;
+	char* hostname = NULL;
+	uint16_t port;
+	char* res = NULL;
+
+	hostname_entry = PyTuple_GetItem(host_tuple, 0);
+
+	if (!hostname_entry) {
+		as_error_update(err, AEROSPIKE_ERR_CLIENT, "failed to fetch hostname");
+		return AEROSPIKE_ERR_CLIENT;
+	}
+
+	if (PyString_Check(hostname_entry)) {
+		hostname = PyString_AsString(hostname_entry);
+	} else if (PyUnicode_Check(hostname_entry)) {
+		unicode_hostname = PyUnicode_AsUTF8String(hostname_entry);
+		if (!unicode_hostname) {
+			as_error_update(err, AEROSPIKE_ERR_PARAM, "Invalid unicode hostname");
+			goto CLEANUP;
+		}
+		hostname = PyBytes_AsString(unicode_hostname);
+	} else {
+		as_error_update(err, AEROSPIKE_ERR_PARAM, "hostname must be string or unicode");
+		goto CLEANUP;
+	}
+
+	port_entry = PyTuple_GetItem(host_tuple, 1);
+
+	if (!port_entry) {
+		as_error_update(err, AEROSPIKE_ERR_CLIENT, "failed to fetch port number");
+		goto CLEANUP;
+	}
+
+	if (PyInt_Check(port_entry)) {
+		port = (uint16_t)PyInt_AsLong(port_entry);
+	} else if (PyLong_Check(port_entry)) {
+		port = (uint16_t)PyLong_AsLong(port_entry);
+	} else {
+		as_error_update(err, AEROSPIKE_ERR_PARAM, "port number must be int or long");
+		goto CLEANUP;
+	}
+
+	if (PyTuple_Size(host_tuple) == 3) {
+		tls_entry = PyTuple_GetItem(host_tuple, 2);
+
+		if (PyString_Check(tls_entry)) {
+			tls_name = PyString_AsString(tls_entry);
+		} else if (PyUnicode_Check(tls_entry)) {
+			unicode_tlsname = PyUnicode_AsUTF8String(tls_entry);
+			if (!unicode_tlsname) {
+				as_error_update(err, AEROSPIKE_ERR_PARAM, "Invalid unicode tls_name");
+				goto CLEANUP;
+			}
+			tls_name = PyBytes_AsString(unicode_tlsname);
+		} else {
+			as_error_update(err, AEROSPIKE_ERR_PARAM, "tls_name must be string or unicode");
+			goto CLEANUP;
+		}
+
+	}
+
+	Py_BEGIN_ALLOW_THREADS
+
+	if (tls_name) {
+		send_info_to_tls_host(as, err, policy, hostname, port, tls_name,
+									   (const char *) req, &res);
+	} else {
+		aerospike_info_host(as, err, policy, hostname, port, (const char *) req, &res);
+	}
+
+	Py_END_ALLOW_THREADS
+
+	if (err->code == AEROSPIKE_OK) {
+		PyObject* py_response = NULL;
+		/* If we got a response use it, otherwise put None */
+		if (res) {
+
+			/* Remove the echoed request from the start of the response */
+			char * out = strchr(res,'\t');
+			if (out) {
+				out++;
+				py_response = PyString_FromString(out);
+			}
+			else {
+				py_response = PyString_FromString(res);
+			}
+			/* PyString_FromString does a copy, so we need to free this */
+			free(res);
+		} else {
+			py_response = Py_None;
+		}
+
+		// For historical reasons the value is a tuple: (None, "response"|None)
+		PyObject* py_out_tuple = Py_BuildValue("OO", Py_None, py_response);
+		Py_DECREF(py_response);
+
+		if (!py_out_tuple) {
+			as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to construct info response tuple");
+			goto CLEANUP;
+		}
+		PyDict_SetItemString(py_response_dict, hostname, py_out_tuple);
+	}
+
+
+CLEANUP:
+	Py_XDECREF(unicode_tlsname);
+	Py_XDECREF(unicode_hostname);
+	return err->code;
+}
