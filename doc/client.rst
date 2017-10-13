@@ -2127,7 +2127,7 @@ a cluster-tending thread.
         Send an info *command* to multiple nodes specified in a *hosts* list.
 
         :param str command: the info command.
-        :param list hosts: a :class:`list` containing an *address*, *port* :py:func:`tuple`. Example: ``[('127.0.0.1', 3000)]``
+        :param list hosts: a :class:`list` containing an *address*, *port*, optional *tls-name*, :py:func:`tuple`. Example: ``[('127.0.0.1', 3000)]`` , or for TLS: ``[('127.0.0.1', 3000, 'server tls-name')]``. The latter form is necessary when sending a request to a cluster node utilizing tls. If hosts is omitted, the command is sent to every node in the cluster
         :param dict policy: optional :ref:`aerospike_info_policies`.
         :rtype: :class:`dict`
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
@@ -2145,14 +2145,28 @@ a cluster-tending thread.
             client.close()
 
         .. note::
+            The output is different based on whether or not the hosts argument is passed. When omitted the output
+            is of the form ``{'Nodename1': (None, 'response'), 'Nodename2': (None, 'response')}``.
 
-            We expect to see something like:
+            When hostnames is provided:
+
+            .. code-block:: python
+
+                info('service', [('hostname1', 3000), ('hostname2', 3000)])
+
+            the response will be of the form:
+
+            .. code-block:: python
+
+                {'hostname1': (None, 'response'), 'hostname1': (None, 'response')}
+
+            When a list of hosts is not provided, the name of the node rather than the hostname will be the key: We expect to see something like:
 
             .. code-block:: python
 
                 {'BB9581F41290C00': (None, '127.0.0.1:3000\n'), 'BC3581F41290C00': (None, '127.0.0.1:3010\n')}
 
-        .. versionchanged:: 1.0.41
+        .. versionchanged:: 3.0.0
 
 
      .. method:: info_node(command, host[, policy]) -> str
@@ -2160,16 +2174,16 @@ a cluster-tending thread.
         Send an info *command* to a single node specified by *host*.
 
         :param str command: the info command.
-        :param tuple host: a :py:func:`tuple` containing an *address*, *port* pair. Example: ``('127.0.0.1', 3000)``
+        :param tuple host: a :py:func:`tuple` containing an *address*, *port* , optional *tls-name* . Example: ``('127.0.0.1', 3000)`` or when using TLS ``('127.0.0.1', 4333, 'server-tls-name')``. In order to send an info request when TLS is enabled, the *tls-name* must be present.
         :param dict policy: optional :ref:`aerospike_info_policies`.
         :rtype: :class:`str`
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
 
         .. seealso:: `Info Command Reference <http://www.aerospike.com/docs/reference/info/>`_.
 
-        .. versionchanged:: 1.0.41
+        .. versionchanged:: 3.0.0
 
-        .. warning:: ``info_node`` will not work when using TLS
+        .. warning:: for client versions < 3.0.0 ``info_node`` will not work when using TLS
 
     .. method:: has_geo()  ->  bool
 

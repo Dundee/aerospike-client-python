@@ -165,7 +165,7 @@ static int query_where_add(as_query **query, as_predicate_type predicate, as_ind
 				if (PyInt_Check(py_val2) || PyLong_Check(py_val2)) {
 					max = pyobject_to_int64(py_val2);
 				} else {
-					as_error_update(err, AEROSPIKE_ERR_PARAM, "Min value must be an integer or long");
+					as_error_update(err, AEROSPIKE_ERR_PARAM, "Max value must be an integer or long");
 					return 1;
 				}
 
