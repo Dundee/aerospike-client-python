@@ -1724,7 +1724,7 @@ as_status check_for_meta(PyObject * py_meta, as_operations * ops, as_error *err)
 			}
 			ops->gen = gen;
 		}
-	} else {
+	} else if (py_meta && (py_meta != Py_None)) {
 		return as_error_update(err, AEROSPIKE_ERR_PARAM, "Metadata should be of type dictionary");
 	}
 	return err->code;

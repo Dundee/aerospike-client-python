@@ -728,10 +728,7 @@ a cluster-tending thread.
         :param tuple key: a :ref:`aerospike_key_tuple` tuple associated with the record.
         :param str bin: the name of the bin.
         :param int index: the position in the index where the value should be set.
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: the list elements at the given index.
@@ -747,10 +744,7 @@ a cluster-tending thread.
         :param tuple key: a :ref:`aerospike_key_tuple` tuple associated with the record.
         :param str bin: the name of the bin.
         :param int index: the position in the index where the value should be set.
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: a :class:`list` of elements.
@@ -786,10 +780,7 @@ a cluster-tending thread.
 
         :param tuple key: a :ref:`aerospike_key_tuple` tuple associated with the record.
         :param str bin: the name of the bin.
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: a :class:`int`.
@@ -901,10 +892,7 @@ a cluster-tending thread.
 
         :param tuple key: a :ref:`aerospike_key_tuple` tuple associated with the record.
         :param str bin: the name of the bin.
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: a :class:`int`.
@@ -1149,10 +1137,7 @@ a cluster-tending thread.
         :param map_key:  :py:class:`int`, :py:class:`str`, \
            :py:class:`float`, :py:class:`bytearray`. An unsupported type will be serialized.
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1172,10 +1157,7 @@ a cluster-tending thread.
         :param range: :py:class:`int`, :py:class:`str`, \
            :py:class:`float`, :py:class:`bytearray`. An unsupported type will be serialized.
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1193,10 +1175,7 @@ a cluster-tending thread.
         :param val: :py:class:`int`, :py:class:`str`, \
            :py:class:`float`, :py:class:`bytearray`. An unsupported type will be serialized.
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1216,10 +1195,7 @@ a cluster-tending thread.
         :param range: :py:class:`int`, :py:class:`str`, \
            :py:class:`float`, :py:class:`bytearray`. An unsupported type will be serialized.
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1236,10 +1212,7 @@ a cluster-tending thread.
         :param str bin: the name of the bin.
         :param index: :py:class:`int` the index location of the map entry
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1258,10 +1231,7 @@ a cluster-tending thread.
         :param index: :py:class:`int` the index location of the first map entry to remove
         :param range: :py:class:`int` the number of items to remove from the map 
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1278,10 +1248,7 @@ a cluster-tending thread.
         :param str bin: the name of the bin.
         :param rank: :py:class:`int` the rank of the value of the entry in the map
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
@@ -1299,10 +1266,7 @@ a cluster-tending thread.
         :param rank: :py:class:`int` the rank of the value of the first map entry to remove
         :param range: :py:class:`int` the number of items to remove from the map 
         :param return_type: :py:class:`int` :ref:`map_return_types`
-        :param dict meta: optional record metadata to be set, with field
-            ``'ttl'`` set to :class:`int` number of seconds or one of 
-            :const:`aerospike.TTL_NAMESPACE_DEFAULT`, :const:`aerospike.TTL_NEVER_EXPIRE`, 
-            :const:`aerospike.TTL_DONT_UPDATE`
+        :param dict meta: unused for this operation
         :param dict policy: optional :ref:`aerospike_operate_policies`.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
         :return: depends on return_type parameter
