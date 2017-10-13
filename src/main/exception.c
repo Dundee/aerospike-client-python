@@ -382,23 +382,7 @@ PyObject* raise_exception(as_error *err) {
 	PyObject * py_key = NULL, *py_value = NULL;
 	Py_ssize_t pos = 0;
 	PyObject * py_module_dict = PyModule_GetDict(module);
-	char * err_msg= err->message, *err_code = err->message;
-	char *final_code = NULL;
-	if (err->code == AEROSPIKE_ERR_UDF) {
-		while (strstr(err_code, ": ")) {
-			err_code++;
-		}
-		while (strstr(err_msg, ":LDT")) {
-			err_msg++;
-		}
-		final_code = (char *)malloc(err_msg - err_code + 2);
-		if (err_code != err->message && err_msg != err->message) {
-			strncpy(final_code, err_code + 1, err_msg - err_code + 2);
-			err->code = atoi(final_code);
-			strcpy(err->message, err_msg);
-		}
-		free(final_code);
-	}
+
 	while (PyDict_Next(py_module_dict, &pos, &py_key, &py_value)) {
 		if (PyObject_HasAttrString(py_value, "code")) {
 			PyObject * py_code = PyObject_GetAttrString(py_value, "code");

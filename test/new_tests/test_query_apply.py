@@ -423,8 +423,8 @@ class TestQueryApply(object):
 
         assert err_code == AerospikeStatus.AEROSPIKE_ERR_PARAM
 
-    @pytest.mark.xfail(reason="Passing an invalid predicate currently works " +
-                              " or raises a System Error")
+    # @pytest.mark.xfail(reason="Passing an invalid predicate currently works " +
+    #                           " or raises a System Error")
     @pytest.mark.parametrize(
         "predicate",
         (
