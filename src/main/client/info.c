@@ -550,6 +550,7 @@ send_info_to_host(PyObject* host_tuple, char* request, PyObject* py_response_dic
 			goto CLEANUP;
 		}
 		PyDict_SetItemString(py_response_dict, hostname, py_out_tuple);
+		Py_DECREF(py_out_tuple);
 	}
 
 

@@ -652,21 +652,9 @@ static int AerospikeClient_Type_Init(AerospikeClient * self, PyObject * args, Py
 			config.policies.batch.base.total_timeout = long_total_timeout;
 		}
 
-		PyObject * py_retry = PyDict_GetItemString(py_policies, "retry");
-		if (py_retry && PyInt_Check(py_retry)) {
-			long long_retry = PyInt_AsLong(py_retry);
-			config.policies.write.base.max_retries = long_retry;
-			config.policies.read.base.max_retries = long_retry;
-			config.policies.apply.base.max_retries = long_retry;
-			config.policies.operate.base.max_retries = long_retry;
-			config.policies.query.base.max_retries = long_retry;
-			config.policies.scan.base.max_retries = long_retry;
-			config.policies.remove.base.max_retries = long_retry;
-			config.policies.batch.base.max_retries = long_retry;
-		}
 		PyObject * py_max_retry = PyDict_GetItemString(py_policies, "max_retries");
 		if (py_max_retry && PyInt_Check(py_max_retry)) {
-			long long_max_retries = PyInt_AsLong(py_retry);
+			long long_max_retries = PyInt_AsLong(py_max_retry);
 			config.policies.write.base.max_retries = long_max_retries;
 			config.policies.read.base.max_retries = long_max_retries;
 			config.policies.apply.base.max_retries = long_max_retries;
