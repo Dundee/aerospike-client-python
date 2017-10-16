@@ -90,14 +90,8 @@ static PyObject * AerospikeClient_InfoNode_Invoke(
 	port_no = host->port;
 
 	if (py_policy) {
-		if (PyDict_Check(py_policy)) {
-			pyobject_to_policy_info(err, py_policy, &info_policy, &info_policy_p,
-					&self->as->config.policies.info);
-			if (err->code != AEROSPIKE_OK) {
-				goto CLEANUP;
-			}
-		} else {
-			as_error_update(err, AEROSPIKE_ERR_PARAM, "Policy should be a dictionary");
+		if (pyobject_to_policy_info(err, py_policy, &info_policy, &info_policy_p,
+				&self->as->config.policies.info) != AEROSPIKE_OK) {
 			goto CLEANUP;
 		}
 	}

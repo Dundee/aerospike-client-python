@@ -565,6 +565,11 @@ PyObject * AerospikeClient_Exists_Many(AerospikeClient * self, PyObject *args, P
 * client.info((x,y,z))
 *
 */
+/**
+ * Send an info request to the entire cluster
+ * client.info_all("statistics", {}")
+*/
+PyObject * AerospikeClient_InfoAll(AerospikeClient * self, PyObject * args, PyObject * kwds);
 PyObject * AerospikeClient_Info(AerospikeClient * self, PyObject * args, PyObject * kwds);
 
 /**

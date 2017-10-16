@@ -38,6 +38,12 @@ a cluster-tending thread.
             'hosts': [ ('127.0.0.1', 3000) ]
         }
 
+        # Optionally set policies for various method types
+        write_policies = {'total_timeout': 2000, 'max_retries': 0}
+        read_policies = {'total_timeout': 1500, 'max_retries': 1}
+        policies = {'write': write_policies, 'read': read_policies}
+        config['policies'] = policies
+
         # Create a client and connect it to the cluster
         try:
             client = aerospike.client(config).connect()
@@ -1420,10 +1426,6 @@ a cluster-tending thread.
             elements in the list will correspond to the order of the operations \
             from the input parameters.
 
-            .. warning::
-
-                Unlike :meth:`operate` this function will apply each of the operations separately, making multiple calls to the server.
-
             :param tuple key: a :ref:`aerospike_key_tuple` associated with the record.
             :param list list: a :class:`list` of one or more bin operations, each \
                 structured as the :class:`dict` \
@@ -1858,7 +1860,7 @@ a cluster-tending thread.
         :param str module: the name of the UDF module.
         :param str function: the name of the UDF to apply to the records matched by the query.
         :param list args: the arguments to the UDF.
-        :param dict policy: optional :ref:`aerospike_query_policies`.
+        :param dict policy: optional :ref:`aerospike_write_policies`.
         :rtype: :class:`int`
         :return: a job ID that can be used with :meth:`job_info` to track the status of the ``aerospike.JOB_QUERY`` , as it runs in the background.
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
@@ -2124,10 +2126,26 @@ a cluster-tending thread.
 
      .. method:: info(command[, hosts[, policy]]) -> {}
 
-        Send an info *command* to multiple nodes specified in a *hosts* list.
+        .. deprecated:: 3.0.0
+            Use :meth:`info_node` to send a request to a single node, or :meth:`info_all` to send a request to the entire cluster. Sending requests to specific nodes can be better handled with a simple Python function such as:
+
+            .. code-block:: python
+
+                def info_to_host_list(client, request, hosts, policy=None):
+                    output = {}
+                    for host in hosts:
+                        try:
+                            response = client.info_node(request, host, policy)
+                            output[host] = response
+                        except Exception as e:
+                            #  Handle the error gracefully here
+                            output[host] = e
+                    return output
+
+        Send an info *command* to all nodes in the cluster and filter responses to only include nodes specified in a *hosts* list.
 
         :param str command: the info command.
-        :param list hosts: a :class:`list` containing an *address*, *port*, optional *tls-name*, :py:func:`tuple`. Example: ``[('127.0.0.1', 3000)]`` , or for TLS: ``[('127.0.0.1', 3000, 'server tls-name')]``. The latter form is necessary when sending a request to a cluster node utilizing tls. If hosts is omitted, the command is sent to every node in the cluster
+        :param list hosts: a :class:`list` containing an *address*, *port* :py:func:`tuple`. Example: ``[('127.0.0.1', 3000)]``
         :param dict policy: optional :ref:`aerospike_info_policies`.
         :rtype: :class:`dict`
         :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
@@ -2145,22 +2163,8 @@ a cluster-tending thread.
             client.close()
 
         .. note::
-            The output is different based on whether or not the hosts argument is passed. When omitted the output
-            is of the form ``{'Nodename1': (None, 'response'), 'Nodename2': (None, 'response')}``.
 
-            When hostnames is provided:
-
-            .. code-block:: python
-
-                info('service', [('hostname1', 3000), ('hostname2', 3000)])
-
-            the response will be of the form:
-
-            .. code-block:: python
-
-                {'hostname1': (None, 'response'), 'hostname1': (None, 'response')}
-
-            When a list of hosts is not provided, the name of the node rather than the hostname will be the key: We expect to see something like:
+            We expect to see something like:
 
             .. code-block:: python
 
@@ -2168,6 +2172,36 @@ a cluster-tending thread.
 
         .. versionchanged:: 3.0.0
 
+     .. method:: info_all(command[, policy]]) -> {}
+
+        Send an info *command* to all nodes in the cluster to which the client is connected. If any of the individual requests fail, this will raise an exception.
+
+        :param str command: the info command.
+        :param dict policy: optional :ref:`aerospike_info_policies`.
+        :rtype: :class:`dict`
+        :raises: a subclass of :exc:`~aerospike.exception.AerospikeError`.
+
+        .. seealso:: `Info Command Reference <http://www.aerospike.com/docs/reference/info/>`_.
+
+        .. code-block:: python
+
+            import aerospike
+
+            config = {'hosts': [('127.0.0.1', 3000)] }
+            client = aerospike.client(config).connect()
+
+            response = client.info_all(command)
+            client.close()
+
+        .. note::
+
+            We expect to see something like:
+
+            .. code-block:: python
+
+                {'BB9581F41290C00': (None, '127.0.0.1:3000\n'), 'BC3581F41290C00': (None, '127.0.0.1:3010\n')}
+
+        .. versionadded:: 3.0.0
 
      .. method:: info_node(command, host[, policy]) -> str
 
