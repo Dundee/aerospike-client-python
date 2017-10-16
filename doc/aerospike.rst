@@ -53,14 +53,6 @@ in an in-memory primary index.
                 * **system_path** the location of the system modules such as ``aerospike.lua`` (default: ``/usr/local/aerospike/lua``)
                 * **user_path** the location of the user's record and stream UDFs . (default: ``./``)
             * **policies** a :class:`dict` of policies
-                * **total_timeout** default connection timeout in milliseconds (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **key** default key policy, with values such as :data:`aerospike.POLICY_KEY_DIGEST` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **exists** default exists policy, with values such as :data:`aerospike.POLICY_EXISTS_CREATE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **gen** default generation policy, with values such as :data:`aerospike.POLICY_GEN_IGNORE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **max_retries** default retry policy, with values such as :data:`aerospike.POLICY_RETRY_NONE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **consistency_level** default consistency level policy, with values such as :data:`aerospike.POLICY_CONSISTENCY_ONE` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **replica** default replica policy, with values such as :data:`aerospike.POLICY_REPLICA_MASTER` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
-                * **commit_level** default commit level policy, with values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL` (Deprecated: set this in one of the policy dictionaries below, read, write, etc)
                 * **read** A dictionary containing read policies. See :ref:`aerospike_read_policies` for available policy fields and values.
                 * **write** A dictionary containing write policies. See :ref:`aerospike_write_policies` for available policy fields and values.
                 * **apply** A dictionary containing apply policies. See :ref:`aerospike_apply_policies` for available policy fields and values.
@@ -69,6 +61,13 @@ in an in-memory primary index.
                 * **query** A dictionary containing query policies. See :ref:`aerospike_query_policies` for available policy fields and values.
                 * **scan** A dictionary containing scan policies. See :ref:`aerospike_scan_policies` for available policy fields and values.
                 * **batch** A dictionary containing batch policies. See :ref:`aerospike_batch_policies` for available policy fields and values.
+                * **total_timeout** default connection timeout in milliseconds (**Deprecated**: set this the individual policy dictionaries)
+                * **key** default key policy, with values such as :data:`aerospike.POLICY_KEY_DIGEST` (**Deprecated**: set this individually in the 'read', 'write', 'apply', 'operate', 'remove' policy dictionaries)
+                * **exists** default exists policy, with values such as :data:`aerospike.POLICY_EXISTS_CREATE` (**Deprecated**: set in the 'write' policies dictionary)
+                * **max_retries** a :class:`int` representing the number of times to retry a transaction (**Deprecated**: set this the individual policy dictionaries)
+                * **consistency_level** default consistency level policy, with values such as :data:`aerospike.POLICY_CONSISTENCY_ONE` (**Deprecated**: set this individually as needed in the 'read','operate', 'batch' policy dictionaries)
+                * **replica** default replica policy, with values such as :data:`aerospike.POLICY_REPLICA_MASTER` (**Deprecated**: set this in one or all of the 'read', 'write', 'apply', 'operate', 'remove' policy dictionaries)
+                * **commit_level** default commit level policy, with values such as :data:`aerospike.POLICY_COMMIT_LEVEL_ALL` (**Deprecated**: set this as needed individually in the 'write', 'apply', 'operate', 'remove' policy dictionaries)
             * **shm** a :class:`dict` with optional shared-memory cluster tending parameters. Shared-memory cluster tending is on if the :class:`dict` is provided. If multiple clients are instantiated talking to the same cluster the *shm* cluster-tending should be used.
                 * **max_nodes** maximum number of nodes allowed. Pad so new nodes can be added without configuration changes (default: 16)
                 * **max_namespaces** similarly pad (default: 8)
@@ -90,7 +89,6 @@ in an in-memory primary index.
                 * **log_session_info** :class:`bool` Log session information for each connection.
             * **serialization** an optional instance-level :py:func:`tuple` of (serializer, deserializer). Takes precedence over a class serializer registered with :func:`~aerospike.set_serializer`.
             * **thread_pool_size** number of threads in the pool that is used in batch/scan/query commands (default: 16)
-            * **max_threads** size of the synchronous connection pool for each server node (default: 300) *DEPRECATED*
             * **max_socket_idle** Maximum socket idle time in seconds.  Connection pools will discard sockets that have
 			been idle longer than the maximum.  The value is limited to 24 hours (86400).
 	 		It's important to set this value to a few seconds less than the server's proto-fd-idle-ms
@@ -98,9 +96,9 @@ in an in-memory primary index.
 			that has already been reaped by the server.
 			Default: 0 seconds (disabled) for non-TLS connections, 55 seconds for TLS connections.
             * **max_conns_per_node** maximum number of pipeline connections allowed for each node 
-            * **batch_direct** whether to use the batch-direct protocol (default: ``False``, so will use batch-index if available)
+            * **batch_direct** whether to use the batch-direct protocol (default: ``False``, so will use batch-index if available) (**Deprecated**: set 'use_batch_direct' in the batch policy dictionary)
             * **tend_interval** polling interval in milliseconds for tending the cluster (default: 1000)
-            * **compression_threshold** compress data for transmission if the object size is greater than a given number of bytes (default: 0, meaning 'never compress')
+            * **compression_threshold** compress data for transmission if the object size is greater than a given number of bytes (default: 0, meaning 'never compress') (**Deprecated**, set this in the 'write' policy dictionary)
             * **cluster_name** only server nodes matching this name will be used when determining the cluster
 
     :return: an instance of the :py:class:`aerospike.Client` class.
