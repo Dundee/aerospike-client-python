@@ -111,6 +111,12 @@ export AEROSPIKE_LUA_PATH=/path/to/aerospike-lua-core/src
 python setup.py build --force
 ```
 
+If using sudo, you may need to set the values inline with the command:
+
+```
+sudo DOWNLOAD_C_CLIENT=0 AEROSPIKE_C_HOME=/path/to/aerospike-c-client AEROSPIKE_LUA_PATH=/path/to/aerospike-lua-core/src python setup.py build --force
+```
+
 
 ## Install
 
