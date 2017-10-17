@@ -14,7 +14,7 @@ except:
     sys.exit(1)
 
 
-@pytest.mark.xfail(TestBaseClass.temporary_xfail(), reason="xfail variable set")
+@pytest.mark.xfail(reason="Method is deprecated")
 @pytest.mark.usefixtures("as_connection", "connection_config")
 class TestInfo(object):
 
