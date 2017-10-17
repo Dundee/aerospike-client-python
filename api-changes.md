@@ -3,11 +3,11 @@
 ## Version 3.0.0
 
 ### LDT Removal
-	Removed LDT (client#llist) methods and support. Server version 3.14 is the last version of the Aerospike server to support the functionality.
+Removed LDT (client#llist) methods and support. Server version 3.14 is the last version of the Aerospike server to support the functionality.
 
 ### Deprecations
-	aerospike.info has been deprecated. In order to send requests to the entire cluster, the new method aerospike.info_all should be used. In order to send requests to
-	hosts specified in a list, we recommend a  loop invoking multiple calls to aerospike.info_node. See below for an example implementation:
+aerospike.info has been deprecated. In order to send requests to the entire cluster, the new method aerospike.info_all should be used. In order to send requests to
+hosts specified in a list, we recommend a  loop invoking multiple calls to aerospike.info_node. See below for an example implementation:
 
 	```python
 
@@ -23,27 +23,27 @@
 		return output
     ```
 
-	Setting of global policy defaults via top level entries in the 'policies' dictionary in the constructor config dict has been deprecated. See the constructor documentation for the new recommended method of specifying defaults.
+Setting of global policy defaults via top level entries in the 'policies' dictionary in the constructor config dict has been deprecated. See the constructor documentation for the new recommended method of specifying defaults.
 
-	Updated documentation for the client policies to show new field names and defaults.
+Updated documentation for the client policies to show new field names and defaults.
 
 
 ### Changed and removed policy field names:
-	In all policies, (except for `info` and `admin`), `timeout` has been split into `total_timeout` and `socket_timeout`
-	`total_timeout` is ann int representing total transaction timeout in milliseconds. The `total_timeout` is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction. If `total_timeout` is not zero and `total_timeout` is reached before the transaction completes, the transaction will return error `TimeoutError`. If `total_timeout` is zero, there will be no total time limit. See the documentation for individual policies for the default values.
+In all policies, (except for `info` and `admin`), `timeout` has been split into `total_timeout` and `socket_timeout`
+`total_timeout` is ann int representing total transaction timeout in milliseconds. The `total_timeout` is tracked on the client and sent to the server along with the transaction in the wire protocol. The client will most likely timeout first, but the server also has the capability to timeout the transaction. If `total_timeout` is not zero and `total_timeout` is reached before the transaction completes, the transaction will return error `TimeoutError`. If `total_timeout` is zero, there will be no total time limit. See the documentation for individual policies for the default values.
 
-	`socket_timeout`: is an int. Socket idle timeout in milliseconds when processing a database command. If `socket_timeout` is not zero and the socket has been idle for at least `socket_timeout`, both max_retries and `total_timeout` are checked. If `max_retries` and total_timeout are not exceeded, the transaction is retried. If both `socket_timeout` and `total_timeout` are non-zero and `socket_timeout` > `total_timeout`, then `socket_timeout` will be set to `total_timeout`. If `socket_timeout` is zero, there will be no socket idle limit. See the documentation for individual policies for the default values.
+`socket_timeout`: is an int. Socket idle timeout in milliseconds when processing a database command. If `socket_timeout` is not zero and the socket has been idle for at least `socket_timeout`, both max_retries and `total_timeout` are checked. If `max_retries` and total_timeout are not exceeded, the transaction is retried. If both `socket_timeout` and `total_timeout` are non-zero and `socket_timeout` > `total_timeout`, then `socket_timeout` will be set to `total_timeout`. If `socket_timeout` is zero, there will be no socket idle limit. See the documentation for individual policies for the default values.
 
-	`retry` has beeen removed.
+`retry` has beeen removed.
 
-	`max_retries` has been added, it is an integer specifying the number of times a transaction should be retried before aborting. If `max_retries` is exceeded, `TimeoutError` will be raised.
+`max_retries` has been added, it is an integer specifying the number of times a transaction should be retried before aborting. If `max_retries` is exceeded, `TimeoutError` will be raised.
 
-	WARNING: Database writes that are not idempotent (such as `client#increment`) should not be retried because the write operation may be performed multiple times if the client timed out previous transaction attempts. It’s important to use a distinct write policy for non-idempotent writes which sets `max_retries` = 0;
+WARNING: Database writes that are not idempotent (such as `client#increment`) should not be retried because the write operation may be performed multiple times if the client timed out previous transaction attempts. It’s important to use a distinct write policy for non-idempotent writes which sets `max_retries` = 0;
 
-	The default value for `max_retries` is 2.
+The default value for `max_retries` is 2.
 
 ### Changes in policy setting for `aerospike.client` constructor
-	In this version, individual config dictionaries (`read`, `write`, `apply`, `operate`, `scan`, `query`, `batch`, `remove`) for method types should be used instead of policy defaults at the top level policy dictionary. The type of policy which affects each method can be found in the documenation. See below for an example of the change in constructor usage:
+In this version, individual config dictionaries (`read`, `write`, `apply`, `operate`, `scan`, `query`, `batch`, `remove`) for method types should be used instead of policy defaults at the top level policy dictionary. The type of policy which affects each method can be found in the documenation. See below for an example of the change in constructor usage:
 
 	```python
 	#  Pre Python client 3.0.0
