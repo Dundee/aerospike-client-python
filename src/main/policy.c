@@ -612,7 +612,7 @@ as_status pyobject_to_policy_write(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
 	POLICY_SET_FIELD(durable_delete, bool);
 	POLICY_SET_FIELD(replica, as_policy_replica);
-	POLICY_SET_FIELD(compression_threshold, uint32_t)
+	POLICY_SET_FIELD(compression_threshold, uint32_t);
 
 	// Update the policy
 	POLICY_UPDATE();
