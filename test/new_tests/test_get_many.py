@@ -168,6 +168,23 @@ class TestGetMany():
             if x[0][2] == 'some_key':
                 assert x[2] is None
 
+    def test_get_many_with_bytearray_key(self):
+        '''
+        Make sure that get many can handle a a key with a bytearray pk
+        '''
+        keys = [('test', 'demo', bytearray([1, 2, 3]))]
+        for key in keys:
+            self.as_connection.put(key, {'byte': 'array'})
+
+        records = self.as_connection.get_many(keys)
+        self.as_connection.remove(keys[0])
+
+        bytearray_key = records[0][0]
+        assert len(bytearray_key) == 4
+
+        bytearray_pk = bytearray_key[2]
+        assert bytearray_pk == bytearray([1, 2, 3])
+
     def test_pos_get_many_with_use_batch_direct(self):
 
         hostlist, user, password = TestBaseClass.get_hosts()
@@ -256,6 +273,12 @@ class TestGetMany():
 
         with pytest.raises(e.ParamError):
             self.as_connection.get_many(None, {})
+
+    def test_get_many_with_an_invalid_key_in_list_batch_direct(self):
+
+        with pytest.raises(e.ParamError):
+            self.as_connection.get_many([('test', 'demo', 1), ('test', 'demo', 2), None],
+                                        {'use_batch_direct': True})
 
     def test_neg_prepend_Invalid_Key_Invalid_ns(self):
         """

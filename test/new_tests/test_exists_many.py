@@ -259,12 +259,31 @@ class TestExistsMany():
 
         assert isinstance(records, list)
         assert len(records) == len(self.keys)
+
+    def test_exists_many_with_bytearray_key(self, put_data):
+        self.keys = [('test', 'demo', bytearray([1, 2, 3]))]
+        for key in self.keys:
+            put_data(self.as_connection, key, {'byte': 'array'})
+
+        records = self.as_connection.exists_many(self.keys)
+
+        bytearray_key = records[0][0]
+        assert len(bytearray_key) == 4
+
+        bytearray_pk = bytearray_key[2]
+        assert bytearray_pk == bytearray([1, 2, 3])
+
     # Negative Tests
 
     def test_neg_exists_many_with_none_keys(self):
 
         with pytest.raises(e.ParamError):
             self.as_connection.exists_many(None, {})
+
+    def test_neg_exists_many_with_an_invalid_key_in_list(self):
+
+        with pytest.raises(e.ParamError):
+            self.as_connection.exists_many([('test', 'demo', 1), ('test', 'demo', 2), 5])
 
     def test_neg_exists_many_with_invalid_key(self):
 

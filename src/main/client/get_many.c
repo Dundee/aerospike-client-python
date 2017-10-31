@@ -31,6 +31,9 @@
 
 #define MAX_STACK_ALLOCATION 20000
 
+static void
+make_batch_safe_to_free(as_batch* batch, int size);
+
 typedef struct {
 	PyObject** py_recs;
 	AerospikeClient * client;
@@ -52,134 +55,20 @@ static bool batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
 {
 	// Typecast udata back to PyObject
 	LocalData* data = (LocalData *) udata;
-	PyObject* py_recs = NULL;
-	// Initialize error object
-	as_error err;
-	as_error_init(&err);
 
 	// Lock Python State
 	PyGILState_STATE gstate;
 	gstate = PyGILState_Ensure();
-	py_recs = PyList_New(0);
 
-	if (!py_recs) {
-		as_error_update(&data->cb_error, AEROSPIKE_ERR_CLIENT, "Failed to allocate memory for batch results");
-		PyGILState_Release(gstate);
-		return false;
-	}
-
-	// Loop over results array
-	for (uint32_t i = 0; i < n; i++) {
-		PyObject * py_rec = NULL;
-		PyObject * py_key = NULL;
-		if (results[i].result == AEROSPIKE_OK) {
-			record_to_pyobject(data->client, &err, &results[i].record, results[i].key, &py_rec);
-			/* Conversion failed, fill in None for the record */
-			if (!py_rec) {
-				key_to_pyobject(&err, results[i].key, &py_key);
-				if (!py_key) {
-					py_key = Py_None;
-					Py_INCREF(Py_None);
-				}
-				py_rec = Py_BuildValue("OOO", py_key, Py_None, Py_None);
-				Py_DECREF(py_key);
-			}
-		/* The record wasn't found, build a (key, None, None) tuple */
-		} else {
-			key_to_pyobject(&err, results[i].key, &py_key);
-			if (!py_key) {
-				py_key = Py_None;
-				Py_INCREF(Py_None);
-			}
-			py_rec = Py_BuildValue("OOO", py_key, Py_None, Py_None);
-			Py_DECREF(py_key);
-		}
-
-		if (!py_rec) {
-			/* This means that buildvalue, failed, so we are in trouble*/
-			Py_XDECREF(py_recs);
-			PyGILState_Release(gstate);
-			as_error_update(&data->cb_error, AEROSPIKE_ERR_CLIENT, "Failed to allocate memory for record entry");
-			return false;
-		}
-		/* PyList_SetItem steals a reference, so we don't need, and may not, decref py_rec */
-		if (PyList_Append(py_recs, py_rec) != 0) {
-			Py_DECREF(py_rec);
-			Py_DECREF(py_recs);
-			PyGILState_Release(gstate);
-			as_error_update(&data->cb_error, AEROSPIKE_ERR_CLIENT, "Failed to add record to results");
-			return false;
-		}
-		Py_DECREF(py_rec);
-
-	}
-
-	// Release Python State
-	*data->py_recs = py_recs;
+	as_batch_read_results_to_pyobject(&data->cb_error, data->client, results, n, data->py_recs);
 	PyGILState_Release(gstate);
-	return true;
+
+	return data->cb_error.code == AEROSPIKE_OK;
 }
 
 /**
  *******************************************************************************************************
- * This function will be called with the results with aerospike_batch_read().
- *
- * @param records               A vector list of as_batch_read_record entries
- * @param py_recs               The pyobject to be filled with.
- *
- *******************************************************************************************************
- */
-static void batch_get_recs(AerospikeClient *self, as_error *err, as_batch_read_records* records, PyObject **py_recs)
-{
-	*py_recs = PyList_New(0);
-
-	if (!(*py_recs)) {
-		as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to allocate return list of records");
-		return;
-	}
-	as_vector* list = &records->list;
-	for (uint32_t i = 0; i < list->size; i++) {
-
-		as_batch_read_record* batch = as_vector_get(list, i);
-		PyObject* py_rec = NULL;
-		PyObject* py_key = NULL;
-
-		/* There should be a record, so convert it to a tuple */
-		if (batch->result == AEROSPIKE_OK) {
-			record_to_pyobject(self, err, &batch->record, &batch->key, &py_rec);
-			if (!py_rec) {
-				Py_XDECREF(*py_recs);
-				return;
-			}
-		/* No record, convert to (key, None, None) */
-		} else {
-			key_to_pyobject(err, &batch->key, &py_key);
-			if (!py_key) {
-				Py_XDECREF(*py_recs);
-				return;
-			}
-			py_rec = Py_BuildValue("OOO", py_key, Py_None, Py_None);
-			Py_DECREF(py_key);
-			if (!py_rec) {
-				as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to create a record tuple");
-				Py_XDECREF(*py_recs);
-				return;
-			}
-		}
-
-		if (PyList_Append(*py_recs, py_rec) != 0) {
-			as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to add record tuple to return list");
-			Py_XDECREF(py_rec);
-			Py_XDECREF(*py_recs);
-			return;
-		}
-		Py_DECREF(py_rec);
-
-	}
-}
-/**
- *******************************************************************************************************
- * This function will get a batch of records from the Aeropike DB.
+ * This function will get a batch of records from the Aerospike DB.
  *
  * @param err                   as_error object
  * @param self                  AerospikeClient object
@@ -275,12 +164,12 @@ static PyObject * batch_get_aerospike_batch_read(as_error *err, AerospikeClient 
 	{
 		goto CLEANUP;
 	}
-	batch_get_recs(self, err, &records, &py_recs);
+	batch_read_records_to_pyobject(self, err, &records, &py_recs);
 
 CLEANUP:
 	if (batch_initialised == true) {
 		// We should destroy batch object as we are using 'as_batch_init' for initialisation
-		// Also, pyobject_to_key is soing strdup() in case of Unicode. So, object destruction
+		// Also, pyobject_to_key is doing strdup() in case of Unicode. So, object destruction
 		// is necessary.
 		as_batch_read_destroy(&records);
 	}
@@ -298,7 +187,7 @@ CLEANUP:
 }
 /**
  *******************************************************************************************************
- * This function will get a batch of records from the Aeropike DB.
+ * This function will get a batch of records from the Aerospike DB.
  *
  * @param err                   as_error object
  * @param self                  AerospikeClient object
@@ -328,7 +217,7 @@ static PyObject * batch_get_aerospike_batch_get(as_error *err, AerospikeClient *
 
 
 		as_batch_init(&batch, size);
-
+		make_batch_safe_to_free(&batch, size);
 		// Batch object initialised
 		batch_initialised = true;
 
@@ -352,6 +241,7 @@ static PyObject * batch_get_aerospike_batch_get(as_error *err, AerospikeClient *
 		Py_ssize_t size = PyTuple_Size(py_keys);
 
 		as_batch_init(&batch, size);
+		make_batch_safe_to_free(&batch, size);
 		// Batch object initialised
 		batch_initialised = true;
 
@@ -518,4 +408,21 @@ PyObject * AerospikeClient_Get_Many(AerospikeClient * self, PyObject * args, PyO
 
 	// Invoke Operation
 	return AerospikeClient_Get_Many_Invoke(self, py_keys, py_policy);
+}
+
+/*
+ * This marks each key in the batch's value pointer as null
+ * and sets it to not be freed on as_key_destroy.
+ * This is needed so that as_batch_destroy does not try to free
+ * any uninitialized data.
+ */
+static void
+make_batch_safe_to_free(as_batch* batch, int size) {
+	for (int i = 0; i < size; i++) {
+		as_key* batch_key = as_batch_keyat(batch, i);
+		if (batch_key) {
+			batch_key->valuep = NULL;
+			batch_key->_free = false;
+		}
+	}
 }
