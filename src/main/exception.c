@@ -37,13 +37,13 @@ PyObject * AerospikeException_New(void)
 	memset(&exceptions_array, 0, sizeof(exceptions_array));
 
 	struct server_exceptions_struct server_array = { 
-		{&exceptions_array.InvalidRequest, &exceptions_array.ServerFull, &exceptions_array.NoXDR, 
+		{&exceptions_array.InvalidRequest, &exceptions_array.ServerFull, &exceptions_array.AlwaysForbidden,
 			&exceptions_array.UnsupportedFeature, &exceptions_array.DeviceOverload, &exceptions_array.NamespaceNotFound, 
 			&exceptions_array.ForbiddenError, &exceptions_array.QueryError, &exceptions_array.ClusterError, 
 			&exceptions_array.InvalidGeoJSON},
-		{"InvalidRequest", "ServerFull", "NoXDR", "UnsupportedFeature", "DeviceOverload", "NamespaceNotFound", 
+		{"InvalidRequest", "ServerFull", "AlwaysForbidden", "UnsupportedFeature", "DeviceOverload", "NamespaceNotFound",
 			"ForbiddenError", "QueryError", "ClusterError", "InvalidGeoJSON"},
-		{AEROSPIKE_ERR_REQUEST_INVALID, AEROSPIKE_ERR_SERVER_FULL, AEROSPIKE_ERR_NO_XDR, 
+		{AEROSPIKE_ERR_REQUEST_INVALID, AEROSPIKE_ERR_SERVER_FULL, AEROSPIKE_ERR_ALWAYS_FORBIDDEN,
 			AEROSPIKE_ERR_UNSUPPORTED_FEATURE, AEROSPIKE_ERR_DEVICE_OVERLOAD, AEROSPIKE_ERR_NAMESPACE_NOT_FOUND,  
 			AEROSPIKE_ERR_FAIL_FORBIDDEN, AEROSPIKE_ERR_QUERY, AEROSPIKE_ERR_CLUSTER, AEROSPIKE_ERR_GEO_INVALID_GEOJSON}
 	};

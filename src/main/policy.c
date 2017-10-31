@@ -403,6 +403,7 @@ as_status pyobject_to_policy_apply(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(gen, as_policy_gen);
 	POLICY_SET_FIELD(commit_level, as_policy_commit_level);
 	POLICY_SET_FIELD(durable_delete, bool);
+	POLICY_SET_FIELD(linearize_read, bool);
 
 	// Update the policy
 	POLICY_UPDATE();
@@ -499,6 +500,7 @@ as_status pyobject_to_policy_read(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(consistency_level, as_policy_consistency_level);
 	POLICY_SET_FIELD(replica, as_policy_replica);
 	POLICY_SET_FIELD(deserialize, bool);
+	POLICY_SET_FIELD(linearize_read, bool);
 
 	// Update the policy
 	POLICY_UPDATE();
@@ -652,6 +654,7 @@ as_status pyobject_to_policy_operate(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(replica, as_policy_replica);
 	POLICY_SET_FIELD(durable_delete, bool);
 	POLICY_SET_FIELD(deserialize, bool);
+	POLICY_SET_FIELD(linearize_read, bool);
 
 	// Update the policy
 	POLICY_UPDATE();
@@ -690,6 +693,7 @@ as_status pyobject_to_policy_batch(as_error * err, PyObject * py_policy,
 	POLICY_SET_FIELD(allow_inline, bool);
 	POLICY_SET_FIELD(send_set_name, bool);
 	POLICY_SET_FIELD(deserialize, bool);
+	POLICY_SET_FIELD(linearize_read, bool);
 
 	// Update the policy
 	POLICY_UPDATE();

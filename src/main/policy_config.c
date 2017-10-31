@@ -110,6 +110,11 @@ as_status set_read_policy(as_policy_read* read_policy, PyObject* py_policy) {
 		return status;
 	}
 
+	status = set_optional_bool_property(&read_policy->linearize_read, py_policy, "linearize_read");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
 	return AEROSPIKE_OK;
 }
 
@@ -206,6 +211,11 @@ as_status set_apply_policy(as_policy_apply* apply_policy, PyObject* py_policy) {
 	}
 
 	status = set_optional_bool_property(&apply_policy->durable_delete, py_policy, "durable_delete");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+	status = set_optional_bool_property(&apply_policy->linearize_read, py_policy, "linearize_read");
 	if (status != AEROSPIKE_OK) {
 		return status;
 	}
@@ -364,6 +374,12 @@ as_status set_operate_policy(as_policy_operate* operate_policy, PyObject* py_pol
 		return status;
 	}
 
+	status = set_optional_bool_property(&operate_policy->linearize_read, py_policy, "linearize_read");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
+
 	return AEROSPIKE_OK;
 }
 
@@ -412,6 +428,12 @@ as_status set_batch_policy(as_policy_batch* batch_policy, PyObject* py_policy) {
 	if (status != AEROSPIKE_OK) {
 		return status;
 	}
+
+	status = set_optional_bool_property(&batch_policy->linearize_read, py_policy, "linearize_read");
+	if (status != AEROSPIKE_OK) {
+		return status;
+	}
+
 
 	return AEROSPIKE_OK;
 }

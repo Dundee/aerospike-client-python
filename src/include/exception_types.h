@@ -29,7 +29,7 @@ struct exceptions {
 	//Server exceptions
 	PyObject *InvalidRequest;
 	PyObject *ServerFull;
-	PyObject *NoXDR;
+	PyObject *AlwaysForbidden;
 	PyObject *UnsupportedFeature;
 	PyObject *DeviceOverload;
 	PyObject *ForbiddenError;
