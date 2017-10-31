@@ -32,8 +32,9 @@
 #define MAX_STACK_ALLOCATION 20000
 
 typedef struct {
-	PyObject * py_recs;
+	PyObject** py_recs;
 	AerospikeClient * client;
+	as_error cb_error;
 } LocalData;
 /**
  *******************************************************************************************************
@@ -50,9 +51,8 @@ typedef struct {
 static bool batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
 {
 	// Typecast udata back to PyObject
-	LocalData *data = (LocalData *) udata;
-	PyObject * py_recs = data->py_recs;
-
+	LocalData* data = (LocalData *) udata;
+	PyObject* py_recs = NULL;
 	// Initialize error object
 	as_error err;
 	as_error_init(&err);
@@ -60,89 +60,62 @@ static bool batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
 	// Lock Python State
 	PyGILState_STATE gstate;
 	gstate = PyGILState_Ensure();
-	/*// Typecast udata back to PyObject
-	PyObject * py_recs = (PyObject *) udata;
+	py_recs = PyList_New(0);
 
-	// Initialize error object
-	as_error err;
-	as_error_init(&err);*/
+	if (!py_recs) {
+		as_error_update(&data->cb_error, AEROSPIKE_ERR_CLIENT, "Failed to allocate memory for batch results");
+		PyGILState_Release(gstate);
+		return false;
+	}
 
 	// Loop over results array
 	for (uint32_t i = 0; i < n; i++) {
-
-		PyObject * rec = NULL;
 		PyObject * py_rec = NULL;
-		PyObject * p_key = NULL;
-		p_key = PyTuple_New(4);
-		py_rec = PyTuple_New(3);
-
-		if (results[i].key->ns && strlen(results[i].key->ns) > 0) {
-			PyTuple_SetItem(p_key, 0, PyString_FromString(results[i].key->ns));
-		}
-
-		if (results[i].key->set && strlen(results[i].key->set) > 0) {
-			PyTuple_SetItem(p_key, 1, PyString_FromString(results[i].key->set));
-		}
-
-		if (results[i].key->valuep) {
-			switch (((as_val*) (results[i].key->valuep))->type) {
-			case AS_INTEGER:
-				PyTuple_SetItem(p_key, 2,
-						PyInt_FromLong(
-								(long) results[i].key->value.integer.value));
-				break;
-
-			case AS_STRING:
-				PyTuple_SetItem(p_key, 2,
-						PyString_FromString(
-								(const char *) results[i].key->value.string.value));
-				break;
-			default:
-				break;
-			}
-		} else {
-			Py_INCREF(Py_None);
-			PyTuple_SetItem(p_key, 2, Py_None);
-		}
-
-		if (results[i].key->digest.init) {
-			PyTuple_SetItem(p_key, 3, PyByteArray_FromStringAndSize((char *) results[i].key->digest.value, AS_DIGEST_VALUE_SIZE));
-		}
-
-		PyTuple_SetItem(py_rec, 0, p_key);
-		// Check record status
+		PyObject * py_key = NULL;
 		if (results[i].result == AEROSPIKE_OK) {
-
-			record_to_pyobject(data->client, &err, &results[i].record,
-					results[i].key, &rec);
-			PyObject *py_obj = PyTuple_GetItem(rec, 1);
-			Py_INCREF(py_obj);
-			PyTuple_SetItem(py_rec, 1, py_obj);
-			py_obj = PyTuple_GetItem(rec, 2);
-			Py_INCREF(py_obj);
-			PyTuple_SetItem(py_rec, 2, py_obj);
-
-			// Set return value in return Dict
-			if (PyList_SetItem(py_recs, i, py_rec)) {
-				// Release Python State
-				PyGILState_Release(gstate);
-				return false;
+			record_to_pyobject(data->client, &err, &results[i].record, results[i].key, &py_rec);
+			/* Conversion failed, fill in None for the record */
+			if (!py_rec) {
+				key_to_pyobject(&err, results[i].key, &py_key);
+				if (!py_key) {
+					py_key = Py_None;
+					Py_INCREF(Py_None);
+				}
+				py_rec = Py_BuildValue("OOO", py_key, Py_None, Py_None);
+				Py_DECREF(py_key);
 			}
-			Py_DECREF(rec);
-		} else if (results[i].result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
-
-			Py_INCREF(Py_None);
-			PyTuple_SetItem(py_rec, 1, Py_None);
-			Py_INCREF(Py_None);
-			PyTuple_SetItem(py_rec, 2, Py_None);
-			if (PyList_SetItem(py_recs, i, py_rec)) {
-				// Release Python State
-				PyGILState_Release(gstate);
-				return false;
+		/* The record wasn't found, build a (key, None, None) tuple */
+		} else {
+			key_to_pyobject(&err, results[i].key, &py_key);
+			if (!py_key) {
+				py_key = Py_None;
+				Py_INCREF(Py_None);
 			}
+			py_rec = Py_BuildValue("OOO", py_key, Py_None, Py_None);
+			Py_DECREF(py_key);
 		}
+
+		if (!py_rec) {
+			/* This means that buildvalue, failed, so we are in trouble*/
+			Py_XDECREF(py_recs);
+			PyGILState_Release(gstate);
+			as_error_update(&data->cb_error, AEROSPIKE_ERR_CLIENT, "Failed to allocate memory for record entry");
+			return false;
+		}
+		/* PyList_SetItem steals a reference, so we don't need, and may not, decref py_rec */
+		if (PyList_Append(py_recs, py_rec) != 0) {
+			Py_DECREF(py_rec);
+			Py_DECREF(py_recs);
+			PyGILState_Release(gstate);
+			as_error_update(&data->cb_error, AEROSPIKE_ERR_CLIENT, "Failed to add record to results");
+			return false;
+		}
+		Py_DECREF(py_rec);
+
 	}
+
 	// Release Python State
+	*data->py_recs = py_recs;
 	PyGILState_Release(gstate);
 	return true;
 }
@@ -158,64 +131,50 @@ static bool batch_get_cb(const as_batch_read* results, uint32_t n, void* udata)
  */
 static void batch_get_recs(AerospikeClient *self, as_error *err, as_batch_read_records* records, PyObject **py_recs)
 {
+	*py_recs = PyList_New(0);
+
+	if (!(*py_recs)) {
+		as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to allocate return list of records");
+		return;
+	}
 	as_vector* list = &records->list;
 	for (uint32_t i = 0; i < list->size; i++) {
+
 		as_batch_read_record* batch = as_vector_get(list, i);
+		PyObject* py_rec = NULL;
+		PyObject* py_key = NULL;
 
-		PyObject * rec = NULL;
-		PyObject * py_rec = NULL;
-		PyObject * p_key = NULL;
-		py_rec = PyTuple_New(3);
-		p_key = PyTuple_New(4);
-
-		if (batch->key.ns && strlen(batch->key.ns) > 0) {
-			PyTuple_SetItem(p_key, 0, PyString_FromString(batch->key.ns));
-		}
-
-		if (batch->key.set && strlen(batch->key.set) > 0) {
-			PyTuple_SetItem(p_key, 1, PyString_FromString(batch->key.set));
-		}
-
-		if (batch->key.valuep) {
-			switch(((as_val*)(batch->key.valuep))->type) {
-				case AS_INTEGER:
-					PyTuple_SetItem(p_key, 2, PyInt_FromLong((long)batch->key.value.integer.value));
-					break;
-
-				case AS_STRING:
-					PyTuple_SetItem(p_key, 2, PyString_FromString((const char *)batch->key.value.string.value));
-					break;
-				default:
-					break;
-			}
-		} else {
-			Py_INCREF(Py_None);
-			PyTuple_SetItem(p_key, 2, Py_None);
-		}
-
-		if (batch->key.digest.init) {
-			PyTuple_SetItem(p_key, 3, PyByteArray_FromStringAndSize((char *) batch->key.digest.value, AS_DIGEST_VALUE_SIZE));
-		}
-
-		PyTuple_SetItem(py_rec, 0, p_key);
-
+		/* There should be a record, so convert it to a tuple */
 		if (batch->result == AEROSPIKE_OK) {
-			record_to_pyobject(self, err, &batch->record, &batch->key, &rec);
-			PyObject *py_obj = PyTuple_GetItem(rec, 1);
-			Py_INCREF(py_obj);
-			PyTuple_SetItem(py_rec, 1, py_obj);
-			py_obj = PyTuple_GetItem(rec, 2);
-			Py_INCREF(py_obj);
-			PyTuple_SetItem(py_rec, 2, py_obj);
-			PyList_SetItem( *py_recs, i, py_rec);
-			Py_DECREF(rec);
-		} else if (batch->result == AEROSPIKE_ERR_RECORD_NOT_FOUND) {
-			Py_INCREF(Py_None);
-			PyTuple_SetItem(py_rec, 1, Py_None);
-			Py_INCREF(Py_None);
-			PyTuple_SetItem(py_rec, 2, Py_None);
-			PyList_SetItem( *py_recs, i, py_rec);
+			record_to_pyobject(self, err, &batch->record, &batch->key, &py_rec);
+			if (!py_rec) {
+				Py_XDECREF(*py_recs);
+				return;
+			}
+		/* No record, convert to (key, None, None) */
+		} else {
+			key_to_pyobject(err, &batch->key, &py_key);
+			if (!py_key) {
+				Py_XDECREF(*py_recs);
+				return;
+			}
+			py_rec = Py_BuildValue("OOO", py_key, Py_None, Py_None);
+			Py_DECREF(py_key);
+			if (!py_rec) {
+				as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to create a record tuple");
+				Py_XDECREF(*py_recs);
+				return;
+			}
 		}
+
+		if (PyList_Append(*py_recs, py_rec) != 0) {
+			as_error_update(err, AEROSPIKE_ERR_CLIENT, "Failed to add record tuple to return list");
+			Py_XDECREF(py_rec);
+			Py_XDECREF(*py_recs);
+			return;
+		}
+		Py_DECREF(py_rec);
+
 	}
 }
 /**
@@ -277,7 +236,6 @@ static PyObject * batch_get_aerospike_batch_read(as_error *err, AerospikeClient 
 	else if (py_keys && PyTuple_Check(py_keys)) {
 		Py_ssize_t size = PyTuple_Size(py_keys);
 
-		py_recs = PyList_New(size);
 		if (size > MAX_STACK_ALLOCATION) {
 			as_batch_read_init(&records, size);
 		} else {
@@ -359,13 +317,16 @@ static PyObject * batch_get_aerospike_batch_get(as_error *err, AerospikeClient *
 	as_batch batch;
 	bool batch_initialised = false;
 
+	data.py_recs = &py_recs;
+	as_error_init(&data.cb_error);
+	as_error_init(err);
+
 	// Convert python keys list to as_key ** and add it to as_batch.keys
 	// keys can be specified in PyList or PyTuple
 	if (py_keys && PyList_Check(py_keys)) {
 		Py_ssize_t size = PyList_Size(py_keys);
 
-		py_recs = PyList_New(size);
-		data.py_recs = py_recs;
+
 		as_batch_init(&batch, size);
 
 		// Batch object initialised
@@ -390,8 +351,6 @@ static PyObject * batch_get_aerospike_batch_get(as_error *err, AerospikeClient *
 	else if (py_keys && PyTuple_Check(py_keys)) {
 		Py_ssize_t size = PyTuple_Size(py_keys);
 
-		py_recs = PyList_New(size);
-		data.py_recs = py_recs;
 		as_batch_init(&batch, size);
 		// Batch object initialised
 		batch_initialised = true;
@@ -435,6 +394,14 @@ CLEANUP:
 		PyObject * py_err = NULL;
 		error_to_pyobject(err, &py_err);
 		PyObject *exception_type = raise_exception(err);
+		PyErr_SetObject(exception_type, py_err);
+		Py_DECREF(py_err);
+		return NULL;
+	} else if (data.cb_error.code != AEROSPIKE_OK) {
+		as_error_update(err, data.cb_error.code, data.cb_error.message);
+		PyObject * py_err = NULL;
+		error_to_pyobject(&data.cb_error, &py_err);
+		PyObject *exception_type = raise_exception(&data.cb_error);
 		PyErr_SetObject(exception_type, py_err);
 		Py_DECREF(py_err);
 		return NULL;
