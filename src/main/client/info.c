@@ -274,7 +274,7 @@ CLEANUP:
 		PyErr_SetObject(exception_type, py_err);
 		Py_DECREF(py_err);
 		PyGILState_Release(gil_state);
-		return NULL;
+		return false;
 	}
 	if (err->code != AEROSPIKE_OK) {
 		PyObject * py_err = NULL;
@@ -283,7 +283,7 @@ CLEANUP:
 		PyErr_SetObject(exception_type, py_err);
 		Py_DECREF(py_err);
 		PyGILState_Release(gil_state);
-		return NULL;
+		return false;
 	}
 
 	PyGILState_Release(gil_state);
@@ -560,7 +560,7 @@ get_formatted_info_response(const char* response) {
 			py_response = PyString_FromString(formatted_output);
 		}
 		else {
-			py_response = PyString_FromString(formatted_output);
+			py_response = PyString_FromString(response);
 		}
 	} else {
 		Py_INCREF(Py_None);
